@@ -91,7 +91,7 @@ assert abs(TRAIN_SPLIT + VAL_SPLIT + TEST_SPLIT - 1.0) < 1e-6, \
     "Splits müssen zusammen 1.0 ergeben!"
 
 # ── Training ──────────────────────────────────────────────────
-BATCH_SIZE:    int   = 32
+BATCH_SIZE:    int   = 128  # RTX 5070 Ti: 128-256 optimal fuer ResNet50
 EPOCHS:        int   = 50
 LEARNING_RATE: float = 0.001
 WEIGHT_DECAY:  float = 1e-4
@@ -118,7 +118,7 @@ WANDB_PROJECT: str  = "malaria-ai"
 ARCHITECTURE:    str   = "resnet50"
 # Optionen: "resnet50", "resnet101", "efficientnet_b0"
 
-FREEZE_BACKBONE: bool  = True
+FREEZE_BACKBONE: bool  = True   # Backbone wird ab Epoch 5 schrittweise aufgetaut
 DROPOUT_RATE:    float = 0.4
 HIDDEN_SIZE:     int   = 256 if NUM_CLASSES <= 2 else 512
 

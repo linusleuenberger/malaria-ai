@@ -1,5 +1,5 @@
 """
-evaluate.py – Modell-Evaluation mit Metriken, Plots & Fehleranalyse
+evaluate.py - Modell-Evaluation mit Metriken, Plots & Fehleranalyse
 =====================================================================
 
 Erstellt:
@@ -111,8 +111,8 @@ def find_optimal_threshold(
 
     Strategie:
         1. Recall muss >= min_recall (95%) sein
-           → Kein infizierter Patient darf verpasst werden
-        2. Unter allen gültigen Schwellenwerten → höchsten F1 wählen
+           -> Kein infizierter Patient darf verpasst werden
+        2. Unter allen gültigen Schwellenwerten -> höchsten F1 wählen
 
     Returns:
         best_threshold : Optimaler Schwellenwert
@@ -242,8 +242,8 @@ def _bootstrap_confidence_interval(
     """
     Bootstrap Konfidenzintervall für Accuracy.
 
-    1000x zufällig Testbilder neu samplen → Accuracy jedes Mal berechnen
-    → 95% aller Werte = Konfidenzintervall.
+    1000x zufällig Testbilder neu samplen -> Accuracy jedes Mal berechnen
+    -> 95% aller Werte = Konfidenzintervall.
 
     Returns:
         (ci_low, ci_high)
@@ -279,7 +279,7 @@ def _denormalize(img_tensor: torch.Tensor) -> np.ndarray:
     Tensor denormalisieren mit MEAN/STD aus config.py.
 
     Fix: Vorher waren ImageNet-Werte hardcodiert.
-    Jetzt kommen die Werte aus config.py → bleibt konsistent
+    Jetzt kommen die Werte aus config.py -> bleibt konsistent
     wenn eigene Normalisierungswerte berechnet wurden.
 
     Args:
@@ -473,7 +473,7 @@ def plot_gradcam(
 
             img_tensor = images[i].unsqueeze(0)
 
-            # Grad-CAM braucht Gradienten → enable_grad
+            # Grad-CAM braucht Gradienten -> enable_grad
             with torch.enable_grad():
                 heatmap = cam(img_tensor.to(DEVICE))
 
@@ -630,7 +630,7 @@ def evaluate(
         target_names = CLASS_NAMES,
         digits       = 4,
     ))
-    logger.info("─" * 40)
+    logger.info("-" * 40)
     logger.info(f"  Accuracy    : {metrics['accuracy']   :.2%} "
                 f"(95% CI: {metrics['accuracy_ci_low']:.2%} – "
                 f"{metrics['accuracy_ci_high']:.2%})")
@@ -641,7 +641,7 @@ def evaluate(
     logger.info(f"  AUC         : {metrics['auc']        :.4f}")
     logger.info(f"  AP Score    : {metrics['ap']         :.4f}")
     logger.info(f"  Threshold   : {threshold:.2f}")
-    logger.info("─" * 40)
+    logger.info("-" * 40)
 
     # 5. Plots erstellen (jeder in eigenem try/except – ein Fehler stoppt nicht alles)
     for fn, kwargs in [
@@ -671,7 +671,7 @@ def evaluate(
             logger.warning(f"Training History fehlgeschlagen: {e}")
 
     # 6. Optimalen Schwellenwert separat speichern
-    # → predict.py kann diesen Wert laden statt hardcoded 0.70 zu nutzen
+    # -> predict.py kann diesen Wert laden statt hardcoded 0.70 zu nutzen
     threshold_path = METRICS_DIR / "optimal_threshold.json"
     with open(threshold_path, "w") as f:
         json.dump({"threshold": threshold, **threshold_metrics}, f, indent=4)
@@ -726,4 +726,4 @@ if __name__ == "__main__":
     for key, value in metrics.items():
         print(f"  {key}: {value}")
 
-    print("\n✓ evaluate.py funktioniert korrekt.")
+    print("\n[OK] evaluate.py funktioniert korrekt.")

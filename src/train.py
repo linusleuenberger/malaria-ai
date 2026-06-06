@@ -12,7 +12,7 @@ from typing import Dict, Tuple
 
 import torch
 import torch.nn as nn
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
@@ -78,11 +78,11 @@ class EarlyStopping:
 
     def __call__(self, val_loss: float) -> bool:
         if val_loss < self.best_loss - self.delta:
-            # Verbesserung → Counter zurücksetzen
+            # Verbesserung -> Counter zurücksetzen
             self.best_loss = val_loss
             self.counter   = 0
         else:
-            # Keine Verbesserung → Counter erhöhen
+            # Keine Verbesserung -> Counter erhöhen
             self.counter += 1
             logger.info(
                 f"Early Stopping: {self.counter}/{self.patience} "
@@ -122,9 +122,9 @@ def _train_one_epoch(
         optimizer.zero_grad()
 
         # ── Mixed Precision ────────────────────────────────
-        # autocast: float16 auf GPU → schneller & weniger RAM
-        # autocast: float32 auf CPU → kein Unterschied
-        with autocast(enabled=(DEVICE == "cuda")):
+        # autocast: float16 auf GPU -> schneller & weniger RAM
+        # autocast: float32 auf CPU -> kein Unterschied
+        with autocast("cuda", enabled=(DEVICE == "cuda")):
             outputs = model(images)
             loss    = criterion(outputs, labels)
 
@@ -172,7 +172,7 @@ def _validate_one_epoch(
             images = images.to(DEVICE)
             labels = labels.to(DEVICE)
 
-            with autocast(enabled=(DEVICE == "cuda")):
+            with autocast("cuda", enabled=(DEVICE == "cuda")):
                 outputs = model(images)
                 loss    = criterion(outputs, labels)
 
@@ -194,7 +194,7 @@ def train(
     val_loader:         DataLoader,
     epochs:             int   = EPOCHS,
     lr:                 float = LEARNING_RATE,
-    unfreeze_at_epoch:  int   = 10,
+    unfreeze_at_epoch:  int   = 5,   # Frueher auftauen = mehr GPU-Auslastung
     unfreeze_n_layers:  int   = 20,
 ) -> Dict[str, list]:
     """
@@ -248,7 +248,7 @@ def train(
     early_stopping = EarlyStopping()
 
     # Mixed Precision Scaler – nur aktiv auf GPU
-    scaler = GradScaler(enabled=(DEVICE == "cuda"))
+    scaler = GradScaler("cuda", enabled=(DEVICE == "cuda"))
 
     # Verlauf speichern
     history: Dict[str, list] = {
@@ -330,7 +330,7 @@ def train(
                 }
             )
             logger.info(
-                f"  → Neues bestes Modell gespeichert "
+                f"  -> Neues bestes Modell gespeichert "
                 f"(Val-Loss: {val_loss:.4f})"
             )
 
@@ -388,4 +388,4 @@ if __name__ == "__main__":
     for key, values in history.items():
         print(f"  {key}: {[round(v, 4) for v in values]}")
 
-    print("\n✓ train.py funktioniert korrekt.")
+    print("\n[OK] train.py funktioniert korrekt.")

@@ -1,0 +1,12 @@
+{
+    "accuracy": 0.9594,
+    "accuracy_ci_low": 0.9533,
+    "accuracy_ci_high": 0.9654,
+    "precision": 0.9594,
+    "recall": 0.9594,
+    "specificity": 0.9623,
+    "f1": 0.9594,
+    "auc": 0.989,
+    "ap": 0.9908,
+    "optimal_threshold": 0.33999999999999986
+}

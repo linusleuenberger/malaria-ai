@@ -238,35 +238,38 @@ def get_eval_transforms(
 def get_dataloaders(
     data_dir: str | Path,
     img_size: int = 224,
-    batch_size: int = 32,
-    num_workers: int = 4,
+    batch_size: int = 128,
+    num_workers: int = 8,
     pin_memory: bool = True,
+    persistent_workers: bool = True,
+    prefetch_factor: int = 2,
     use_weighted_sampler: bool = True,
     mean: Tuple[float, ...] = (0.485, 0.456, 0.406),
     std:  Tuple[float, ...] = (0.229, 0.224, 0.225),
 ) -> Dict[str, DataLoader]:
     """
-    Erstellt DataLoader für train, val und test in einem Schritt.
+    Erstellt DataLoader fuer train, val und test in einem Schritt.
 
     Args:
         data_dir             : Pfad zu data/processed/
-        img_size             : Bildgrösse in Pixel (quadratisch)
-        batch_size           : Bilder pro Batch
-        num_workers          : Parallele Worker (0 = kein Multiprocessing)
+        img_size             : Bildgroesse in Pixel (quadratisch)
+        batch_size           : Bilder pro Batch (128-256 fuer RTX optimal)
+        num_workers          : Parallele Worker (8 fuer schnellen Transfer)
         pin_memory           : Schnellerer GPU-Transfer (nur mit GPU sinnvoll)
+        persistent_workers   : Worker zwischen Epochen am Leben lassen
+        prefetch_factor      : Batches die CPU vorlaedt waehrend GPU arbeitet
         use_weighted_sampler : Klassenungleichgewicht automatisch ausgleichen
         mean                 : RGB-Mittelwerte (am besten mit compute_dataset_stats())
         std                  : RGB-Standardabweichungen
 
     Returns:
         Dict mit Keys 'train', 'val', 'test'
-
-    Beispiel:
-        >>> loaders = get_dataloaders("data/processed", batch_size=32)
-        >>> for images, labels in loaders["train"]:
-        ...     # images: [B, 3, 224, 224] | labels: [B]
     """
     data_dir = Path(data_dir)
+
+    # persistent_workers braucht num_workers > 0
+    _persistent = persistent_workers and num_workers > 0
+    _prefetch   = prefetch_factor if num_workers > 0 else None
 
     train_tf = get_train_transforms(img_size, mean, std)
     eval_tf  = get_eval_transforms(img_size, mean, std)
@@ -277,7 +280,7 @@ def get_dataloaders(
         "test" : MalariaDataset(data_dir / "test",  transform=eval_tf),
     }
 
-    # WeightedRandomSampler nur für Training
+    # WeightedRandomSampler nur fuer Training
     train_sampler: Optional[WeightedRandomSampler] = None
     if use_weighted_sampler:
         weights = datasets["train"].get_class_weights()
@@ -290,42 +293,48 @@ def get_dataloaders(
     loaders: Dict[str, DataLoader] = {
         "train": DataLoader(
             datasets["train"],
-            batch_size  = batch_size,
-            sampler     = train_sampler,
-            shuffle     = (train_sampler is None),  # shuffle nur ohne Sampler
-            num_workers = num_workers,
-            pin_memory  = pin_memory,
-            drop_last   = True,   # letzten unvollständigen Batch weg → stabile BatchNorm
+            batch_size         = batch_size,
+            sampler            = train_sampler,
+            shuffle            = (train_sampler is None),
+            num_workers        = num_workers,
+            pin_memory         = pin_memory,
+            persistent_workers = _persistent,
+            prefetch_factor    = _prefetch,
+            drop_last          = True,
         ),
         "val": DataLoader(
             datasets["val"],
-            batch_size  = batch_size,
-            shuffle     = False,
-            num_workers = num_workers,
-            pin_memory  = pin_memory,
+            batch_size         = batch_size,
+            shuffle            = False,
+            num_workers        = num_workers,
+            pin_memory         = pin_memory,
+            persistent_workers = _persistent,
+            prefetch_factor    = _prefetch,
         ),
         "test": DataLoader(
             datasets["test"],
-            batch_size  = batch_size,
-            shuffle     = False,
-            num_workers = num_workers,
-            pin_memory  = pin_memory,
+            batch_size         = batch_size,
+            shuffle            = False,
+            num_workers        = num_workers,
+            pin_memory         = pin_memory,
+            persistent_workers = _persistent,
+            prefetch_factor    = _prefetch,
         ),
     }
 
-    # Übersicht ausgeben
-    print("\n╔══════════════════════════════════════════════════╗")
-    print("║            DataLoader – Übersicht                ║")
-    print("╠══════════════╦════════╦══════════╦══════════════╣")
-    print("║ Split        ║ Gesamt ║  Healthy ║  Infected    ║")
-    print("╠══════════════╬════════╬══════════╬══════════════╣")
+    # Uebersicht ausgeben (ASCII-sicher)
+    print("\n" + "=" * 52)
+    print("  DataLoader - Uebersicht")
+    print("=" * 52)
+    print(f"  {'Split':<12s}  {'Gesamt':>6}  {'Healthy':>8}  {'Infected':>8}")
+    print("-" * 52)
     for split, ds in datasets.items():
         c = ds.get_class_counts()
-        print(f"║ {split:<12s} ║ {len(ds):>6,} ║ {c['healthy']:>8,} ║ {c['infected']:>8,}     ║")
-    sampler_str = "WeightedSampler ✓" if use_weighted_sampler else "RandomShuffle"
-    print("╠══════════════╩════════╩══════════╩══════════════╣")
-    print(f"║  Batch: {batch_size:<4d}  Sampling: {sampler_str:<24s}║")
-    print("╚══════════════════════════════════════════════════╝\n")
+        print(f"  {split:<12s}  {len(ds):>6,}  {c['healthy']:>8,}  {c['infected']:>8,}")
+    sampler_str = "WeightedSampler [OK]" if use_weighted_sampler else "RandomShuffle"
+    print("-" * 52)
+    print(f"  Batch: {batch_size}  Workers: {num_workers}  Sampling: {sampler_str}")
+    print("=" * 52 + "\n")
 
     return loaders
 

@@ -35,8 +35,8 @@ def set_seed(seed: int = RANDOM_SEED) -> None:
     Alle Zufallsgeneratoren auf denselben Seed setzen.
 
     Warum:
-        Ohne Seed → jedes Training gibt andere Ergebnisse
-        Mit Seed  → gleiche Ergebnisse bei jedem Durchlauf
+        Ohne Seed -> jedes Training gibt andere Ergebnisse
+        Mit Seed  -> gleiche Ergebnisse bei jedem Durchlauf
                     wichtig für Reproduzierbarkeit & ETH-Präsentation
 
     Args:
@@ -297,11 +297,11 @@ def sanity_check(
     Schneller Check vor dem Training ob alles korrekt funktioniert.
 
     Prüft:
-        ✓ Kann ein Batch durch das Modell?
-        ✓ Gibt es NaN Werte in Outputs?
-        ✓ Stimmen die Output-Dimensionen?
-        ✓ Funktioniert GPU Transfer?
-        ✓ Sind Labels im gültigen Bereich?
+        [OK] Kann ein Batch durch das Modell?
+        [OK] Gibt es NaN Werte in Outputs?
+        [OK] Stimmen die Output-Dimensionen?
+        [OK] Funktioniert GPU Transfer?
+        [OK] Sind Labels im gültigen Bereich?
 
     Args:
         model  : Das Modell
@@ -317,43 +317,43 @@ def sanity_check(
     try:
         # ── 1. Batch laden ────────────────────────────────
         images, labels = next(iter(loader))
-        logger.info(f"✓ Batch geladen: {list(images.shape)}")
+        logger.info(f"[OK] Batch geladen: {list(images.shape)}")
 
         # ── 2. GPU Transfer ───────────────────────────────
         images = images.to(DEVICE)
         labels = labels.to(DEVICE)
-        logger.info(f"✓ GPU Transfer:  {DEVICE.upper()}")
+        logger.info(f"[OK] GPU Transfer:  {DEVICE.upper()}")
 
         # ── 3. Vorwärtsdurchlauf ──────────────────────────
         model.eval()
         with torch.no_grad():
             outputs = model(images)
-        logger.info(f"✓ Output Shape:  {list(outputs.shape)}")
+        logger.info(f"[OK] Output Shape:  {list(outputs.shape)}")
 
         # ── 4. NaN Check ──────────────────────────────────
         if torch.isnan(outputs).any():
-            logger.error("✗ NaN Werte in Outputs gefunden!")
+            logger.error("[FAIL] NaN Werte in Outputs gefunden!")
             return False
-        logger.info("✓ Keine NaN Werte")
+        logger.info("[OK] Keine NaN Werte")
 
         # ── 5. Output Dimensionen ─────────────────────────
         from src.config import NUM_CLASSES
         if outputs.shape[1] != NUM_CLASSES:
             logger.error(
-                f"✗ Output hat {outputs.shape[1]} Klassen "
+                f"[FAIL] Output hat {outputs.shape[1]} Klassen "
                 f"aber {NUM_CLASSES} erwartet!"
             )
             return False
-        logger.info(f"✓ Klassen: {NUM_CLASSES}")
+        logger.info(f"[OK] Klassen: {NUM_CLASSES}")
 
         # ── 6. Labels Check ───────────────────────────────
         if labels.min() < 0 or labels.max() >= NUM_CLASSES:
             logger.error(
-                f"✗ Labels ausserhalb gültigem Bereich: "
+                f"[FAIL] Labels ausserhalb gültigem Bereich: "
                 f"min={labels.min()}, max={labels.max()}"
             )
             return False
-        logger.info(f"✓ Labels gültig: 0 – {NUM_CLASSES - 1}")
+        logger.info(f"[OK] Labels gültig: 0 – {NUM_CLASSES - 1}")
 
         # ── 7. Kurzer Trainingsschritt ────────────────────
         model.train()
@@ -367,17 +367,17 @@ def sanity_check(
         optimizer.step()
 
         if torch.isnan(loss):
-            logger.error("✗ Loss ist NaN – Training würde fehlschlagen!")
+            logger.error("[FAIL] Loss ist NaN – Training würde fehlschlagen!")
             return False
-        logger.info(f"✓ Trainingsschritt: Loss = {loss.item():.4f}")
+        logger.info(f"[OK] Trainingsschritt: Loss = {loss.item():.4f}")
 
         logger.info("=" * 50)
-        logger.info("✓ Sanity Check bestanden – Training kann starten!")
+        logger.info("[OK] Sanity Check bestanden – Training kann starten!")
         logger.info("=" * 50)
         return True
 
     except Exception as e:
-        logger.error(f"✗ Sanity Check fehlgeschlagen: {e}")
+        logger.error(f"[FAIL] Sanity Check fehlgeschlagen: {e}")
         return False
 
 
@@ -390,8 +390,8 @@ def update_requirements(
 
     Warum:
         Nach jedem pip install ändert sich die Umgebung
-        → requirements.txt manuell updaten vergisst man
-        → diese Funktion macht es automatisch
+        -> requirements.txt manuell updaten vergisst man
+        -> diese Funktion macht es automatisch
 
     Args:
         output_path : Pfad zur requirements.txt
@@ -410,7 +410,7 @@ def update_requirements(
         n_packages = len(result.stdout.strip().splitlines())
         logger.info(
             f"requirements.txt aktualisiert: "
-            f"{n_packages} Pakete → {output_path}"
+            f"{n_packages} Pakete -> {output_path}"
         )
 
     except subprocess.CalledProcessError as e:
@@ -461,7 +461,7 @@ def load_metrics(metrics_path: Path) -> Dict[str, float]:
     if not metrics_path.exists():
         raise FileNotFoundError(
             f"Metriken nicht gefunden: {metrics_path}\n"
-            f"→ Zuerst evaluate.py ausführen."
+            f"-> Zuerst evaluate.py ausführen."
         )
 
     with open(metrics_path, "r") as f:
@@ -477,9 +477,9 @@ def format_time(seconds: float) -> str:
     Sekunden in lesbares Format umwandeln.
 
     Beispiele:
-        45    → "45s"
-        130   → "2m 10s"
-        3700  → "1h 1m 40s"
+        45    -> "45s"
+        130   -> "2m 10s"
+        3700  -> "1h 1m 40s"
 
     Args:
         seconds : Zeitdauer in Sekunden
@@ -541,7 +541,7 @@ if __name__ == "__main__":
     # ── Zeitformatierung testen ───────────────────────────
     print("\nZeitformatierung:")
     for secs in [45, 130, 3700]:
-        print(f"  {secs}s → {format_time(secs)}")
+        print(f"  {secs}s -> {format_time(secs)}")
 
     # ── Fortschrittsbalken testen ─────────────────────────
     print("\nFortschrittsbalken:")
@@ -558,9 +558,9 @@ if __name__ == "__main__":
     )
     model = build_model()
     passed = sanity_check(model, loaders["train"])
-    print(f"  Sanity Check: {'✓ bestanden' if passed else '✗ fehlgeschlagen'}")
+    print(f"  Sanity Check: {'[OK] bestanden' if passed else '[FAIL] fehlgeschlagen'}")
 
     # ── Requirements updaten ──────────────────────────────
     update_requirements(BASE_DIR / "requirements.txt")
 
-    print("\n✓ utils.py funktioniert korrekt.")
+    print("\n[OK] utils.py funktioniert korrekt.")

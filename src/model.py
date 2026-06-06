@@ -113,9 +113,9 @@ def unfreeze_layers(model: nn.Module, n_layers: int) -> None:
     Letzte n_layers Layer trainierbar machen.
 
     Empfohlene Reihenfolge:
-        Schritt 1: freeze_backbone=True  → nur Head trainieren
-        Schritt 2: unfreeze_layers(20)   → letzte 20 Layer auftauen
-        Schritt 3: unfreeze_layers(50)   → noch mehr auftauen
+        Schritt 1: freeze_backbone=True  -> nur Head trainieren
+        Schritt 2: unfreeze_layers(20)   -> letzte 20 Layer auftauen
+        Schritt 3: unfreeze_layers(50)   -> noch mehr auftauen
 
     Args:
         model    : Das Modell
@@ -129,7 +129,7 @@ def unfreeze_layers(model: nn.Module, n_layers: int) -> None:
                     if p.requires_grad)
     logger.info(
         f"Aufgetaut: letzte {n_layers} Layer "
-        f"→ {trainable:,} trainierbare Parameter"
+        f"-> {trainable:,} trainierbare Parameter"
     )
 
 
@@ -228,4 +228,4 @@ if __name__ == "__main__":
     print(f"Ausgabe:  {list(out.shape)}")
     print(f"Klassen:  {NUM_CLASSES}")
     print(f"Loss:     {get_loss_function()}")
-    print("\n✓ model.py funktioniert korrekt.")
+    print("\n[OK] model.py funktioniert korrekt.")

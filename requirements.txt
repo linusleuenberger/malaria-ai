@@ -1,3 +1,40 @@
-pathlib
-torch
-torchvision
+# ============================================================
+# requirements.txt – Malaria-KI Projekt
+# ============================================================
+# Installation:
+#   pip install -r requirements.txt
+#
+# GPU (CUDA 12.1):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+# GPU (CUDA 11.8):
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+# CPU only:
+#   pip install torch torchvision
+# ============================================================
+
+# Deep Learning
+torch>=2.1.0
+torchvision>=0.16.0
+
+# Bildverarbeitung
+Pillow>=10.0.0
+opencv-python>=4.8.0
+albumentations>=1.3.0
+
+# Numerik & Daten
+numpy>=1.24.0
+scikit-learn>=1.3.0
+
+# Visualisierung
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Fortschrittsanzeige
+tqdm>=4.65.0
+
+# Notebooks
+jupyter>=1.0.0
+ipykernel>=6.0.0
+
+# Tests
+pytest>=7.4.0
