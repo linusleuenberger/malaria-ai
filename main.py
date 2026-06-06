@@ -33,6 +33,8 @@ from typing import Optional
 import numpy as np
 import torch
 
+logger = logging.getLogger(__name__)
+
 
 # ── Logging Setup ─────────────────────────────────────────────
 def setup_logging(log_dir: Path, debug: bool = False) -> None:
@@ -44,6 +46,13 @@ def setup_logging(log_dir: Path, debug: bool = False) -> None:
         INFO    → normaler Betrieb
         WARNING → Probleme die nicht zum Abbruch führen
         ERROR   → Fehler die zum Abbruch führen
+        
+    Args:
+        log_dir (Path): Pfad zum Ordner für Log-Dateien.
+        debug (bool): Ob Debug-Modus aktiviert werden soll.
+        
+    Returns:
+        None
     """
     log_dir.mkdir(parents=True, exist_ok=True)
     log_file = log_dir / "run.log"
@@ -64,7 +73,7 @@ def setup_logging(log_dir: Path, debug: bool = False) -> None:
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     logging.getLogger("albumentations").setLevel(logging.WARNING)
 
-    logging.getLogger(__name__).info(f"Logging aktiv → {log_file}")
+    logger.info(f"Logging aktiv → {log_file}")
 
 
 # ── Reproduzierbarkeit ────────────────────────────────────────
@@ -72,6 +81,12 @@ def set_seed(seed: int = 42) -> None:
     """
     Alle Zufallsgeneratoren auf denselben Seed setzen.
     Gleicher Seed = gleiche Ergebnisse bei gleichem Code.
+    
+    Args:
+        seed (int): Der gewünschte Random-Seed.
+        
+    Returns:
+        None
     """
     random.seed(seed)
     np.random.seed(seed)
@@ -80,7 +95,7 @@ def set_seed(seed: int = 42) -> None:
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark     = False
 
-    logging.getLogger(__name__).info(f"Seed gesetzt: {seed}")
+    logger.info(f"Seed gesetzt: {seed}")
 
 
 # ── Device ────────────────────────────────────────────────────
@@ -88,8 +103,10 @@ def get_device() -> torch.device:
     """
     Bestes verfügbares Gerät automatisch wählen.
     Priorität: CUDA → MPS (Apple) → CPU
+    
+    Returns:
+        torch.device: Das ausgewählte Gerät.
     """
-    logger = logging.getLogger(__name__)
 
     if torch.cuda.is_available():
         device = torch.device("cuda")
@@ -113,47 +130,71 @@ def _check_processed_data(processed_dir: str) -> None:
     """
     Prüft ob aufbereitete Daten vorhanden sind.
     Gibt verständliche Fehlermeldung statt kryptischem Fehler.
+    
+    Args:
+        processed_dir (str): Pfad zum Ordner mit aufbereiteten Daten.
+        
+    Returns:
+        None
+        
+    Raises:
+        FileNotFoundError: Wenn der Ordner nicht existiert.
     """
     path = Path(processed_dir)
 
     if not path.exists():
-        logging.getLogger(__name__).error(
+        logger.error(
             f"Keine verarbeiteten Daten gefunden: {path}\n"
             f"  → Zuerst ausführen: "
             f"python main.py --mode preprocess"
         )
-        sys.exit(1)
+        raise FileNotFoundError(f"Datenordner fehlt: {path}")
 
     for split in ["train", "val", "test"]:
         split_path = path / split
         if not split_path.exists():
-            logging.getLogger(__name__).error(
+            logger.error(
                 f"Split-Ordner fehlt: {split_path}\n"
                 f"  → Zuerst ausführen: "
                 f"python main.py --mode preprocess"
             )
-            sys.exit(1)
+            raise FileNotFoundError(f"Split-Ordner fehlt: {split_path}")
 
 
 def _log_runtime(start: float, modus: str) -> None:
-    """Laufzeit formatiert ausgeben."""
+    """
+    Laufzeit formatiert ausgeben.
+    
+    Args:
+        start (float): Startzeitpunkt.
+        modus (str): Name des ausgeführten Modus.
+        
+    Returns:
+        None
+    """
     elapsed = time.time() - start
     minutes = int(elapsed // 60)
     seconds = int(elapsed % 60)
-    logging.getLogger(__name__).info(
+    logger.info(
         f"{modus} abgeschlossen in {minutes}m {seconds}s"
     )
 
 
 # ── Modus: Preprocessing ──────────────────────────────────────
 def mode_preprocess(args: argparse.Namespace) -> None:
-    """raw → processed Pipeline ausführen."""
+    """
+    raw → processed Pipeline ausführen.
+    
+    Args:
+        args (argparse.Namespace): Die Kommandozeilenargumente.
+        
+    Returns:
+        None
+    """
     from preprocessing.prepare_dataset import (
         prepare_dataset,
         verify_processed_dataset,
     )
-
-    logger = logging.getLogger(__name__)
     logger.info("=" * 60)
     logger.info("MODUS: Preprocessing")
     logger.info("=" * 60)
@@ -183,13 +224,18 @@ def mode_preprocess(args: argparse.Namespace) -> None:
 
 # ── Modus: Augmentierung ──────────────────────────────────────
 def mode_augment(args: argparse.Namespace) -> None:
-    """Offline-Augmentierung ausführen."""
+    """
+    Offline-Augmentierung ausführen.
+    
+    Args:
+        args (argparse.Namespace): Die Kommandozeilenargumente.
+        
+    Returns:
+        None
+    """
     from preprocessing.augmentation import (
         augment_dataset_offline,
-        balance_classes_offline,
     )
-
-    logger = logging.getLogger(__name__)
     logger.info("=" * 60)
     logger.info("MODUS: Augmentierung")
     logger.info("=" * 60)
@@ -255,7 +301,16 @@ def mode_train(
     args:   argparse.Namespace,
     device: torch.device,
 ) -> None:
-    """Modell trainieren."""
+    """
+    Modell trainieren.
+    
+    Args:
+        args (argparse.Namespace): Die Kommandozeilenargumente.
+        device (torch.device): Das zu verwendende Gerät (CPU/GPU).
+        
+    Returns:
+        None
+    """
     from src.config import (
         BATCH_SIZE,
         BEST_MODEL_PATH,
@@ -274,8 +329,6 @@ def mode_train(
         print_system_info,
         sanity_check,
     )
-
-    logger = logging.getLogger(__name__)
     logger.info("=" * 60)
     logger.info("MODUS: Training")
     logger.info("=" * 60)
@@ -387,7 +440,20 @@ def mode_evaluate(
     device:  torch.device,
     history: Optional[dict] = None,
 ) -> None:
-    """Modell auf Testset evaluieren."""
+    """
+    Modell auf Testset evaluieren.
+    
+    Args:
+        args (argparse.Namespace): Die Kommandozeilenargumente.
+        device (torch.device): Das zu verwendende Gerät (CPU/GPU).
+        history (Optional[dict]): Trainingsverlauf (falls vorhanden).
+        
+    Returns:
+        None
+        
+    Raises:
+        FileNotFoundError: Wenn das Modell nicht gefunden wird.
+    """
     from src.config  import (
         BATCH_SIZE,
         IMAGE_SIZE,
@@ -396,8 +462,6 @@ def mode_evaluate(
     from src.dataset  import get_dataloaders
     from src.evaluate import evaluate
     from src.model    import load_model
-
-    logger = logging.getLogger(__name__)
     logger.info("=" * 60)
     logger.info("MODUS: Evaluation")
     logger.info("=" * 60)
@@ -441,11 +505,21 @@ def mode_predict(
     args:   argparse.Namespace,
     device: torch.device,
 ) -> None:
-    """Einzelbild oder Ordner vorhersagen."""
+    """
+    Einzelbild oder Ordner vorhersagen.
+    
+    Args:
+        args (argparse.Namespace): Die Kommandozeilenargumente.
+        device (torch.device): Das zu verwendende Gerät (CPU/GPU).
+        
+    Returns:
+        None
+        
+    Raises:
+        FileNotFoundError: Wenn Modell oder Bild/Ordner nicht gefunden werden.
+    """
     from src.config import IMAGE_SIZE
     from src.model  import load_model
-
-    logger = logging.getLogger(__name__)
     logger.info("=" * 60)
     logger.info("MODUS: Vorhersage")
     logger.info("=" * 60)
@@ -460,43 +534,51 @@ def mode_predict(
 
     # ── Einzelbild ─────────────────────────────────────────
     if args.image:
-        from src.predict import predict_image
+        from src.predict import preprocess_image, predict
 
         image_path = Path(args.image)
         if not image_path.exists():
             logger.error(f"Bild nicht gefunden: {image_path}")
             sys.exit(1)
 
-        pred, prob = predict_image(model, image_path, device)
+        tensor, original = preprocess_image(image_path)
+        result = predict(model, tensor, device)
+        pred = result["predicted_idx"]
+        confidence = result["confidence"]
 
         logger.info(f"Bild     : {image_path.name}")
         logger.info(
             f"Diagnose : "
             f"{'🔴 INFECTED' if pred == 1 else '🟢 HEALTHY'}"
         )
-        logger.info(f"Konfidenz: {prob[0][pred].item():.2%}")
+        logger.info(f"Konfidenz: {confidence:.2%}")
 
         # Grad-CAM anzeigen
         if args.gradcam:
-            from src.evaluate import GradCAM, plot_gradcam
-            plot_gradcam(
-                model     = model,
-                loader    = None,
-                save_path = Path("results/plots/gradcam_predict.png"),
-            )
+            from src.predict import GradCAM, get_last_conv_layer
+            import matplotlib.pyplot as plt
+            cam = GradCAM(model, get_last_conv_layer(model))
+            heatmap = cam(tensor.to(device))
+            overlay = GradCAM.overlay(original, heatmap)
+            fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+            axes[0].imshow(original); axes[0].set_title("Original"); axes[0].axis("off")
+            axes[1].imshow(overlay);  axes[1].set_title("Grad-CAM"); axes[1].axis("off")
+            plt.tight_layout()
+            plt.savefig(Path("results/plots/gradcam_predict.png"), dpi=150)
+            plt.close()
 
         # Ergebnis speichern
         if args.save:
             import json
             from src.config import PREDICTIONS_DIR
-            result = {
-                "image"    : str(image_path),
-                "predicted": "infected" if pred == 1 else "healthy",
-                "confidence": round(prob[0][pred].item(), 4),
+            result_data = {
+                "image"     : str(image_path),
+                "predicted" : result["predicted_class"],
+                "confidence": round(confidence, 4),
             }
             save_path = PREDICTIONS_DIR / "prediction.json"
             with open(save_path, "w") as f:
-                json.dump(result, f, indent=4)
+                json.dump(result_data, f, indent=4)
             logger.info(f"Ergebnis gespeichert: {save_path}")
 
     # ── Ordner ─────────────────────────────────────────────
@@ -506,7 +588,7 @@ def mode_predict(
             logger.error(f"Ordner nicht gefunden: {folder_path}")
             sys.exit(1)
 
-        from src.predict import predict_image
+        from src.predict import preprocess_image, predict
         from src.config  import CLASS_NAMES, IDX_TO_CLASS, PREDICTIONS_DIR
 
         # Alle Bilder im Ordner finden
@@ -525,9 +607,11 @@ def mode_predict(
         healthy    = 0
 
         for img_path in image_paths:
-            pred, prob = predict_image(model, img_path, device)
-            confidence = prob[0][pred].item()
-            label      = IDX_TO_CLASS[pred]
+            tensor, _ = preprocess_image(img_path)
+            result_item = predict(model, tensor, device)
+            pred       = result_item["predicted_idx"]
+            confidence = result_item["confidence"]
+            label      = result_item["predicted_class"]
 
             results.append({
                 "image"     : img_path.name,
@@ -581,6 +665,9 @@ def mode_predict(
 def parse_args() -> argparse.Namespace:
     """
     Alle Kommandozeilen-Argumente definieren.
+    
+    Returns:
+        argparse.Namespace: Die geparsten Argumente.
     """
     parser = argparse.ArgumentParser(
         description     = "Malaria-KI – Erkennung infizierter Blutzellen",
@@ -719,11 +806,16 @@ def parse_args() -> argparse.Namespace:
 
 # ── Einstiegspunkt ────────────────────────────────────────────
 def main() -> None:
+    """
+    Hauptfunktion des Skripts.
+    Liest Argumente, initialisiert Umgebung und ruft Modus auf.
+    
+    Returns:
+        None
+    """
     args   = parse_args()
     setup_logging(Path(args.log_dir), debug=args.debug)
     set_seed(args.seed)
-
-    logger = logging.getLogger(__name__)
     logger.info("╔══════════════════════════════════════╗")
     logger.info("║        Malaria-KI gestartet          ║")
     logger.info("╚══════════════════════════════════════╝")

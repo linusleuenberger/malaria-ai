@@ -14,15 +14,11 @@ import numpy as np
 import pytest
 import torch
 from PIL import Image
-from torch.utils.data import DataLoader
 
 from src.config import (
-    BATCH_SIZE,
     CLASS_NAMES,
     IMAGE_SIZE,
-    MEAN,
     NUM_CLASSES,
-    STD,
 )
 from src.dataset import (
     MalariaDataset,

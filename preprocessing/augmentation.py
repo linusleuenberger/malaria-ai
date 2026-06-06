@@ -718,19 +718,19 @@ if __name__ == "__main__":
     )
 
     if not test_images:
-        print("[ERROR] Keine Testbilder in data/raw/ gefunden.")
+        logger.error("Keine Testbilder in data/raw/ gefunden.")
         sys.exit(1)
 
     img = cv2.imread(str(test_images[0]))
-    print(f"Original Shape: {img.shape}")
+    logger.info(f"Original Shape: {img.shape}")
 
     # ── Qualitäts-Check testen ─────────────────────────────
-    print("\nQualitäts-Check:")
+    logger.info("Qualitäts-Check:")
     valid = _is_valid_augmentation(img)
-    print(f"  Original gültig: {valid}")
+    logger.info(f"  Original gültig: {valid}")
 
     # ── Pipelines testen ──────────────────────────────────
-    print("\nPipelines:")
+    logger.info("Pipelines:")
     for extended in [False, True]:
         pipeline = (
             get_extended_offline_pipeline()
@@ -740,28 +740,28 @@ if __name__ == "__main__":
         result   = pipeline(image=img)["image"]
         is_valid = _is_valid_augmentation(result)
         mode     = "erweitert" if extended else "standard"
-        print(
+        logger.info(
             f"  ✓ {mode:<12} → "
             f"Shape: {result.shape} | "
             f"Gültig: {is_valid}"
         )
 
     # ── Visualisierungen ──────────────────────────────────
-    print("\nVisualisierungen:")
+    logger.info("Visualisierungen:")
     plot_augmentation_examples(
         img,
         save_path = PLOTS_DIR / "augmentation_examples.png"
     )
-    print("  ✓ Beispiele gespeichert")
+    logger.info("  ✓ Beispiele gespeichert")
 
     plot_pipeline_comparison(
         img,
         save_path = PLOTS_DIR / "augmentation_comparison.png"
     )
-    print("  ✓ Vergleich gespeichert")
+    logger.info("  ✓ Vergleich gespeichert")
 
     # ── Offline Augmentierung mit Resume testen ───────────
-    print("\nOffline Augmentierung (5 Bilder, resume=True):")
+    logger.info("Offline Augmentierung (5 Bilder, resume=True):")
     stats = augment_dataset_offline(
         input_dir      = test_images[0].parent,
         output_dir     = AUGMENTED_DIR / "test",
@@ -770,23 +770,23 @@ if __name__ == "__main__":
         resume         = True,
         quality_check  = True,
     )
-    print(f"  Original    : {stats['original']}")
-    print(f"  Augmentiert : {stats['augmented']}")
-    print(f"  Übersprungen: {stats['skipped']}")
-    print(f"  Verworfen   : {stats['rejected']}")
-    print(f"  Total       : {stats['total']}")
+    logger.info(f"  Original    : {stats['original']}")
+    logger.info(f"  Augmentiert : {stats['augmented']}")
+    logger.info(f"  Übersprungen: {stats['skipped']}")
+    logger.info(f"  Verworfen   : {stats['rejected']}")
+    logger.info(f"  Total       : {stats['total']}")
 
     # ── Resume testen: nochmal ausführen ──────────────────
-    print("\nResume Test (nochmal ausführen):")
+    logger.info("Resume Test (nochmal ausführen):")
     stats2 = augment_dataset_offline(
         input_dir      = test_images[0].parent,
         output_dir     = AUGMENTED_DIR / "test",
         augment_factor = 2,
         resume         = True,
     )
-    print(
+    logger.info(
         f"  Übersprungen: {stats2['skipped']} "
         f"(sollte > 0 sein)"
     )
 
-    print("\n✓ augmentation.py funktioniert korrekt.")
+    logger.info("✓ augmentation.py funktioniert korrekt.")

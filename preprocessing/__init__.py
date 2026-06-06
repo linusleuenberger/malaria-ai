@@ -191,8 +191,8 @@ def print_status() -> None:
         ✗ augmentation.py  ← albumentations fehlt
         ✓ prepare_dataset.py
     """
-    print(f"\npreprocessing v{__version__}")
-    print("-" * 35)
+    logger.info(f"preprocessing v{__version__}")
+    logger.info("-" * 35)
     modules = {
         "filter.py"          : _FILTER_AVAILABLE,
         "normalization.py"   : _NORMALIZATION_AVAILABLE,
@@ -202,8 +202,8 @@ def print_status() -> None:
     for name, available in modules.items():
         status = "✓" if available else "✗"
         color  = "" if available else " ← fehlt!"
-        print(f"  {status} {name}{color}")
-    print()
+        logger.info(f"  {status} {name}{color}")
+    logger.info("")
 
 
 # ── __all__ ───────────────────────────────────────────────────

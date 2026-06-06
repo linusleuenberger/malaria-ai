@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 from typing import Dict, Optional
 
 import torch
@@ -136,7 +137,7 @@ def unfreeze_layers(model: nn.Module, n_layers: int) -> None:
 # ── Modell speichern ──────────────────────────────────────────
 def save_model(
     model:      nn.Module,
-    path:       object = FINAL_MODEL_PATH,
+    path:       Path = FINAL_MODEL_PATH,
     extra_info: Optional[dict] = None,
 ) -> None:
     """
@@ -161,7 +162,7 @@ def save_model(
 
 
 # ── Modell laden ──────────────────────────────────────────────
-def load_model(path: object = FINAL_MODEL_PATH) -> nn.Module:
+def load_model(path: Path = FINAL_MODEL_PATH) -> nn.Module:
     """
     Gespeichertes Modell laden.
 
@@ -171,7 +172,11 @@ def load_model(path: object = FINAL_MODEL_PATH) -> nn.Module:
     Returns:
         Modell im eval() Modus auf DEVICE
     """
-    checkpoint = torch.load(path, map_location=DEVICE)
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"Modell nicht gefunden: {path}")
+
+    checkpoint = torch.load(path, map_location=DEVICE, weights_only=False)
 
     model = build_model(
         architecture    = checkpoint.get("architecture", ARCHITECTURE),
@@ -220,12 +225,12 @@ def _log_parameter_count(model: nn.Module) -> None:
 # ── Quick-Test: python -m src.model ──────────────────────────
 if __name__ == "__main__":
     model = build_model()
-    print(model)
+    logger.info(f"Modell: {model}")
 
     dummy = torch.randn(1, 3, 224, 224).to(DEVICE)
     out   = model(dummy)
-    print(f"\nEingabe:  {list(dummy.shape)}")
-    print(f"Ausgabe:  {list(out.shape)}")
-    print(f"Klassen:  {NUM_CLASSES}")
-    print(f"Loss:     {get_loss_function()}")
-    print("\n✓ model.py funktioniert korrekt.")
+    logger.info(f"Eingabe:  {list(dummy.shape)}")
+    logger.info(f"Ausgabe:  {list(out.shape)}")
+    logger.info(f"Klassen:  {NUM_CLASSES}")
+    logger.info(f"Loss:     {get_loss_function()}")
+    logger.info("✓ model.py funktioniert korrekt.")

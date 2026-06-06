@@ -20,8 +20,10 @@ import torch
 
 from src.config import (
     DEVICE,
+    MEAN,
     PLOTS_DIR,
     RANDOM_SEED,
+    STD,
     CLASS_NAMES,
     IDX_TO_CLASS,
 )
@@ -145,8 +147,8 @@ def plot_sample_images(
 
     for i in range(min(n_images, len(images))):
         img = images[i].permute(1, 2, 0).numpy()
-        img = img * np.array([0.229, 0.224, 0.225])
-        img = img + np.array([0.485, 0.456, 0.406])
+        img = img * np.array(STD)
+        img = img + np.array(MEAN)
         img = np.clip(img, 0, 1)
 
         label = IDX_TO_CLASS[labels[i].item()]
@@ -539,17 +541,17 @@ if __name__ == "__main__":
     print_system_info()
 
     # ── Zeitformatierung testen ───────────────────────────
-    print("\nZeitformatierung:")
+    logger.info("Zeitformatierung:")
     for secs in [45, 130, 3700]:
-        print(f"  {secs}s → {format_time(secs)}")
+        logger.info(f"  {secs}s → {format_time(secs)}")
 
     # ── Fortschrittsbalken testen ─────────────────────────
-    print("\nFortschrittsbalken:")
+    logger.info("Fortschrittsbalken:")
     for i in [5, 10, 15, 20]:
-        print(f"  {progress_bar(i, 20)}")
+        logger.info(f"  {progress_bar(i, 20)}")
 
     # ── Sanity Check testen ───────────────────────────────
-    print("\nSanity Check:")
+    logger.info("Sanity Check:")
     loaders = get_dataloaders(
         data_dir    = PROCESSED_DIR,
         batch_size  = 4,
@@ -558,9 +560,9 @@ if __name__ == "__main__":
     )
     model = build_model()
     passed = sanity_check(model, loaders["train"])
-    print(f"  Sanity Check: {'✓ bestanden' if passed else '✗ fehlgeschlagen'}")
+    logger.info(f"  Sanity Check: {'✓ bestanden' if passed else '✗ fehlgeschlagen'}")
 
     # ── Requirements updaten ──────────────────────────────
     update_requirements(BASE_DIR / "requirements.txt")
 
-    print("\n✓ utils.py funktioniert korrekt.")
+    logger.info("✓ utils.py funktioniert korrekt.")

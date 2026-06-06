@@ -696,26 +696,19 @@ if __name__ == "__main__":
     )
 
     if not test_images:
-        print("[ERROR] Keine Testbilder in data/raw/ gefunden.")
-        print("→ Zuerst Datensatz herunterladen.")
+        logger.error("Keine Testbilder in data/raw/ gefunden.")
+        logger.error("→ Zuerst Datensatz herunterladen.")
         sys.exit(1)
 
     test_image = test_images[0]
-    print(f"Teste mit: {test_image}")
+    logger.info(f"Teste mit: {test_image}")
 
     img = cv2.imread(str(test_image))
-    print(f"Original Shape: {img.shape}")
+    logger.info(f"Original Shape: {img.shape}")
 
-    # ── Qualitäts-Check testen ─────────────────────────────
-    print("\nQualitäts-Check:")
+    # ── Qualitäts-Check ───────────────────────────────────
+    logger.info("Qualitäts-Check:")
     quality = check_image_quality(img)
-    print(f"  Bestanden  : {quality['passed']}")
-    print(f"  Helligkeit : {quality['brightness']}")
-    print(f"  Kontrast   : {quality['contrast']}")
-    print(f"  Schärfe    : {quality['sharpness']}")
-
-    # ── Jeden Filter testen ────────────────────────────────
-    print("\nFilter Tests:")
     tests = {
         "gaussian_blur"      : apply_gaussian_blur(img),
         "median_blur"        : apply_median_blur(img),
@@ -727,25 +720,25 @@ if __name__ == "__main__":
     }
 
     for name, result in tests.items():
-        print(f"  ✓ {name}: {result.shape}")
+        logger.info(f"  ✓ {name}: {result.shape}")
 
     # ── Visualisierung testen ──────────────────────────────
-    print("\nVisualisierung:")
+    logger.info("Visualisierung:")
     plot_filter_comparison(
         img,
         save_path = PLOTS_DIR / "filter_comparison.png"
     )
-    print(f"  ✓ Gespeichert: {PLOTS_DIR / 'filter_comparison.png'}")
+    logger.info(f"  ✓ Gespeichert: {PLOTS_DIR / 'filter_comparison.png'}")
 
     # ── Batch-Test mit 5 Bildern ───────────────────────────
-    print("\nBatch-Test (5 Bilder):")
+    logger.info("Batch-Test (5 Bilder):")
     stats = process_batch(
         input_paths = test_images[:5],
         output_dir  = RAW_DIR.parent / "processed_test",
         n_workers   = 2,
     )
-    print(f"  Verarbeitet : {stats['processed']}")
-    print(f"  Übersprungen: {stats['skipped']}")
-    print(f"  Fehler      : {stats['failed']}")
+    logger.info(f"  Verarbeitet : {stats['processed']}")
+    logger.info(f"  Übersprungen: {stats['skipped']}")
+    logger.info(f"  Fehler      : {stats['failed']}")
 
-    print("\n✓ filter.py funktioniert korrekt.")
+    logger.info("✓ filter.py funktioniert korrekt.")

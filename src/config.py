@@ -132,3 +132,8 @@ FINAL_MODEL_PATH: Path = FINAL_DIR      / "final_model.pth"
 
 # ── Reproduzierbarkeit ────────────────────────────────────────
 RANDOM_SEED: int = 42
+
+if __name__ == "__main__":
+    logger.info(f"Config erfolgreich geladen. Pfade initialisiert in: {BASE_DIR}")
+    logger.info(f"Klassen: {CLASS_NAMES}")
+    logger.info(f"Gerät: {DEVICE}")

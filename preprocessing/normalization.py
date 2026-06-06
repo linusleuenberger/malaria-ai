@@ -585,23 +585,23 @@ if __name__ == "__main__":
     )
 
     if not test_images:
-        print("[ERROR] Keine Testbilder in data/raw/ gefunden.")
+        logger.error("Keine Testbilder in data/raw/ gefunden.")
         sys.exit(1)
 
     img = cv2.imread(str(test_images[0]))
-    print(f"Original Shape:  {img.shape}")
-    print(f"Original Range:  {img.min()} – {img.max()}")
+    logger.info(f"Original Shape:  {img.shape}")
+    logger.info(f"Original Range:  {img.min()} – {img.max()}")
 
     # ── Validierung testen ─────────────────────────────────
-    print("\nInput Validierung:")
+    logger.info("Input Validierung:")
     try:
         _validate_image(img)
-        print("  ✓ Validierung bestanden")
+        logger.info("  ✓ Validierung bestanden")
     except (TypeError, ValueError) as e:
-        print(f"  ✗ Fehler: {e}")
+        logger.error(f"  ✗ Fehler: {e}")
 
     # ── Alle Methoden testen ───────────────────────────────
-    print("\nNormalisierung Tests:")
+    logger.info("Normalisierung Tests:")
     tests = {
         "minmax"     : apply_normalization_pipeline(img, "minmax"),
         "percentile" : apply_normalization_pipeline(img, "percentile"),
@@ -610,45 +610,45 @@ if __name__ == "__main__":
     }
 
     for name, result in tests.items():
-        print(
+        logger.info(
             f"  ✓ {name:<12} "
             f"Range: [{result.min():.3f}, {result.max():.3f}]  "
             f"Mean: {result.mean():.3f}"
         )
 
     # ── Denormalisierung testen ────────────────────────────
-    print("\nDenormalisierung:")
+    logger.info("Denormalisierung:")
     norm   = normalize_imagenet(img)
     denorm = denormalize_imagenet(norm)
     diff   = np.abs(img.astype(np.float32) - denorm.astype(np.float32))
-    print(f"  ✓ Max Differenz nach Denorm: {diff.max():.2f} Pixel")
+    logger.info(f"  ✓ Max Differenz nach Denorm: {diff.max():.2f} Pixel")
 
     # ── Statistiken mit Cache testen ──────────────────────
-    print("\nDatensatz-Statistiken (mit Cache):")
+    logger.info("Datensatz-Statistiken (mit Cache):")
     stats = compute_channel_statistics(
         test_images,
         sample_size = 50,
         cache_path  = METRICS_DIR / "dataset_stats.json",
     )
-    print(f"  mean: {stats['mean']}")
-    print(f"  std:  {stats['std']}")
+    logger.info(f"  mean: {stats['mean']}")
+    logger.info(f"  std:  {stats['std']}")
 
     # Zweiter Aufruf → aus Cache laden
     stats_cached = compute_channel_statistics(
         test_images,
         cache_path = METRICS_DIR / "dataset_stats.json",
     )
-    print(f"  ✓ Cache funktioniert: {stats == stats_cached}")
+    logger.info(f"  ✓ Cache funktioniert: {stats == stats_cached}")
 
     # ── Visualisierung testen ──────────────────────────────
-    print("\nVisualisierung:")
+    logger.info("Visualisierung:")
     plot_normalization_comparison(
         img,
         save_path = PLOTS_DIR / "normalization_comparison.png"
     )
-    print(
+    logger.info(
         f"  ✓ Gespeichert: "
         f"{PLOTS_DIR / 'normalization_comparison.png'}"
     )
 
-    print("\n✓ normalization.py funktioniert korrekt.")
+    logger.info("✓ normalization.py funktioniert korrekt.")

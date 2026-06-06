@@ -715,23 +715,23 @@ if __name__ == "__main__":
     import sys
 
     # ── Validierung testen ─────────────────────────────────
-    print("Validierung:")
+    logger.info("Validierung:")
     try:
         counts = validate_raw_dataset()
         for name, count in counts.items():
-            print(f"  {name}: {count:,} Bilder")
+            logger.info(f"  {name}: {count:,} Bilder")
     except (FileNotFoundError, RuntimeError) as e:
-        print(f"  [ERROR] {e}")
-        print(
-            "\n  → Datensatz herunterladen:\n"
-            "  https://lhncbc.nlm.nih.gov/LHC-research/"
+        logger.error(str(e))
+        logger.info(
+            "→ Datensatz herunterladen: "
+            "https://lhncbc.nlm.nih.gov/LHC-research/"
             "LHC-projects/image-processing/"
             "malaria-datasheet.html"
         )
         sys.exit(1)
 
     # ── Pipeline ausführen ────────────────────────────────
-    print("\nPipeline starten:")
+    logger.info("Pipeline starten:")
     split_stats = prepare_dataset(
         apply_filters = True,
         n_workers     = 4,
@@ -739,14 +739,14 @@ if __name__ == "__main__":
     )
 
     # ── Integrity-Check ───────────────────────────────────
-    print("\nIntegrity-Check:")
+    logger.info("Integrity-Check:")
     ok = verify_processed_dataset()
-    print(f"  {'✓ Bestanden' if ok else '✗ Fehlgeschlagen'}")
+    logger.info(f"  {'✓ Bestanden' if ok else '✗ Fehlgeschlagen'}")
 
     # ── Ergebnis ──────────────────────────────────────────
-    print("\nErgebnis:")
+    logger.info("Ergebnis:")
     for split_name, classes in split_stats.items():
         for class_name, count in classes.items():
-            print(f"  {split_name}/{class_name}: {count:,}")
+            logger.info(f"  {split_name}/{class_name}: {count:,}")
 
-    print("\n✓ prepare_dataset.py funktioniert korrekt.")
+    logger.info("✓ prepare_dataset.py funktioniert korrekt.")

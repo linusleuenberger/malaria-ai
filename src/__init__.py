@@ -30,17 +30,22 @@ except ImportError as e:
 # ── Status ────────────────────────────────────────────────────
 def print_status() -> None:
     """Zeigt welche Module verfügbar sind."""
+    import sys
+    _mod = sys.modules[__name__]
     modules = {
-        "model.py"   : "build_model"        in dir(),
-        "train.py"   : "train"              in dir(),
-        "evaluate.py": "evaluate"           in dir(),
-        "utils.py"   : "set_seed"           in dir(),
+        "model.py"   : hasattr(_mod, "build_model"),
+        "train.py"   : hasattr(_mod, "train"),
+        "evaluate.py": hasattr(_mod, "evaluate"),
+        "utils.py"   : hasattr(_mod, "set_seed"),
     }
-    print(f"\nsrc v{__version__}")
-    print("-" * 30)
+    logger.info(f"src v{__version__}")
+    logger.info("-" * 30)
     for name, ok in modules.items():
-        print(f"  {'✓' if ok else '✗'} {name}")
-    print()
+        logger.info(f"  {'✓' if ok else '✗'} {name}")
+    logger.info("")
+
+if __name__ == "__main__":
+    print_status()
 
 __all__ = [
     "__version__",

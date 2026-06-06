@@ -12,7 +12,7 @@ from typing import Dict, Tuple
 
 import torch
 import torch.nn as nn
-from torch.cuda.amp import GradScaler, autocast
+from torch.amp import GradScaler, autocast
 from torch.optim import Adam
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
@@ -124,7 +124,7 @@ def _train_one_epoch(
         # ── Mixed Precision ────────────────────────────────
         # autocast: float16 auf GPU → schneller & weniger RAM
         # autocast: float32 auf CPU → kein Unterschied
-        with autocast(enabled=(DEVICE == "cuda")):
+        with autocast(device_type="cuda", enabled=(DEVICE == "cuda")):
             outputs = model(images)
             loss    = criterion(outputs, labels)
 
@@ -172,7 +172,7 @@ def _validate_one_epoch(
             images = images.to(DEVICE)
             labels = labels.to(DEVICE)
 
-            with autocast(enabled=(DEVICE == "cuda")):
+            with autocast(device_type="cuda", enabled=(DEVICE == "cuda")):
                 outputs = model(images)
                 loss    = criterion(outputs, labels)
 
@@ -384,8 +384,8 @@ if __name__ == "__main__":
         unfreeze_n_layers = 10,
     )
 
-    print("\nVerlauf:")
+    logger.info("Verlauf:")
     for key, values in history.items():
-        print(f"  {key}: {[round(v, 4) for v in values]}")
+        logger.info(f"  {key}: {[round(v, 4) for v in values]}")
 
-    print("\n✓ train.py funktioniert korrekt.")
+    logger.info("✓ train.py funktioniert korrekt.")

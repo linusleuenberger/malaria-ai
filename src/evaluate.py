@@ -44,9 +44,9 @@ from src.config import (
     DEVICE,
     IDX_TO_CLASS,
     MEAN,
-    STD,
     METRICS_DIR,
     PLOTS_DIR,
+    STD,
     USE_WANDB,
 )
 # GradCAM wird aus predict.py importiert – keine Duplizierung
@@ -722,8 +722,8 @@ if __name__ == "__main__":
     model   = load_model(BEST_MODEL_PATH)
     metrics = evaluate(model=model, loader=loaders["test"])
 
-    print("\nMetriken:")
+    logger.info("Metriken:")
     for key, value in metrics.items():
-        print(f"  {key}: {value}")
+        logger.info(f"  {key}: {value}")
 
-    print("\n✓ evaluate.py funktioniert korrekt.")
+    logger.info("✓ evaluate.py funktioniert korrekt.")

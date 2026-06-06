@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import logging
 import time
 from datetime import datetime
 from pathlib import Path
@@ -33,14 +34,17 @@ import torch.nn.functional as F
 from PIL import Image
 from torchvision import transforms
 
+from src.config import DEVICE, PREDICTIONS_DIR
 from src.dataset import IDX_TO_CLASS, get_eval_transforms
+
+logger = logging.getLogger(__name__)
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Konstanten
 # ──────────────────────────────────────────────────────────────────────────────
 
 UNCERTAINTY_THRESHOLD = 0.70   # unter 70% → "unsicher"
-RESULTS_DIR = Path("results/predictions")
+RESULTS_DIR = PREDICTIONS_DIR
 VALID_EXTENSIONS = {".png", ".jpg", ".jpeg", ".tif", ".tiff", ".bmp"}
 
 
@@ -150,7 +154,7 @@ class GradCAM:
         # Heatmap einfärben (warm = wichtig, kalt = unwichtig)
         colormap  = plt.get_cmap("jet")
         colored   = (colormap(heatmap)[:, :, :3] * 255).astype(np.uint8)
-        heatmap_img = Image.fromarray(colored).resize(original.size, Image.BILINEAR)
+        heatmap_img = Image.fromarray(colored).resize(original.size, Image.Resampling.BILINEAR)
 
         # Überlagern
         return Image.blend(original.convert("RGB"), heatmap_img, alpha=alpha)
@@ -168,43 +172,6 @@ def get_last_conv_layer(model: nn.Module) -> nn.Module:
     if last_conv is None:
         raise ValueError("Keine Conv2d-Schicht im Modell gefunden.")
     return last_conv
-
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Modell laden
-# ──────────────────────────────────────────────────────────────────────────────
-
-def load_model(
-    model_path: str | Path,
-    device: torch.device,
-) -> torch.nn.Module:
-    """
-    Lädt ein gespeichertes Modell von der Festplatte.
-
-    Erkennt automatisch ob der Checkpoint nur Gewichte enthält
-    oder auch Metadaten wie Epoche und Validation-Accuracy.
-    """
-    from src.model import MalariaNet
-
-    model_path = Path(model_path)
-    if not model_path.exists():
-        raise FileNotFoundError(f"Modell nicht gefunden: {model_path}")
-
-    checkpoint = torch.load(model_path, map_location=device)
-
-    if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
-        state_dict = checkpoint["model_state_dict"]
-        print(f"  Checkpoint Epoche : {checkpoint.get('epoch', '?')}")
-        print(f"  Val Accuracy      : {checkpoint.get('val_acc', '?'):.4f}")
-    else:
-        state_dict = checkpoint
-
-    model = MalariaNet()
-    model.load_state_dict(state_dict)
-    model.to(device)
-    model.eval()
-
-    return model
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -390,8 +357,8 @@ def save_results(results: List[Dict], prefix: str = "predict") -> Dict[str, Path
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
-    print(f"Gespeichert: {csv_path}")
-    print(f"Gespeichert: {json_path}")
+    logger.info(f"Gespeichert: {csv_path}")
+    logger.info(f"Gespeichert: {json_path}")
 
     return {"csv": csv_path, "json": json_path}
 
@@ -407,25 +374,25 @@ def print_result(result: Dict, image_path: str | Path) -> None:
     bar_filled = int(confidence / 5)
     bar        = "█" * bar_filled + "░" * (20 - bar_filled)
 
-    print()
-    print("╔══════════════════════════════════════════╗")
-    print("║           Malaria-KI Ergebnis            ║")
-    print("╠══════════════════════════════════════════╣")
-    print(f"║  Bild      : {Path(image_path).name:<28s}║")
-    print(f"║  Diagnose  : {label:<28s}║")
-    print(f"║  Confidence: {confidence:>5.1f}%                        ║")
-    print(f"║  [{bar}]   ║")
-    print("╠══════════════════════════════════════════╣")
-    print(f"║  P(healthy)  = {result['prob_healthy']:>6.4f}                  ║")
-    print(f"║  P(infected) = {result['prob_infected']:>6.4f}                  ║")
-    print(f"║  Inferenzzeit: {result['inference_ms']:>5.1f} ms                 ║")
+    logger.info("")
+    logger.info("╔══════════════════════════════════════════╗")
+    logger.info("║           Malaria-KI Ergebnis            ║")
+    logger.info("╠══════════════════════════════════════════╣")
+    logger.info(f"║  Bild      : {Path(image_path).name:<28s}║")
+    logger.info(f"║  Diagnose  : {label:<28s}║")
+    logger.info(f"║  Confidence: {confidence:>5.1f}%                        ║")
+    logger.info(f"║  [{bar}]   ║")
+    logger.info("╠══════════════════════════════════════════╣")
+    logger.info(f"║  P(healthy)  = {result['prob_healthy']:>6.4f}                  ║")
+    logger.info(f"║  P(infected) = {result['prob_infected']:>6.4f}                  ║")
+    logger.info(f"║  Inferenzzeit: {result['inference_ms']:>5.1f} ms                 ║")
 
     if result["uncertain"]:
-        print("╠══════════════════════════════════════════╣")
-        print("║  ⚠️  UNSICHER – bitte manuell prüfen      ║")
+        logger.info("╠══════════════════════════════════════════╣")
+        logger.info("║  ⚠️  UNSICHER – bitte manuell prüfen      ║")
 
-    print("╚══════════════════════════════════════════╝")
-    print()
+    logger.info("╚══════════════════════════════════════════╝")
+    logger.info("")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -451,10 +418,10 @@ def predict_folder(
                    if p.suffix.lower() in VALID_EXTENSIONS]
 
     if not image_paths:
-        print(f"[WARN] Keine Bilder in {folder_path}")
+        logger.warning(f"Keine Bilder in {folder_path}")
         return []
 
-    print(f"Verarbeite {len(image_paths)} Bilder (Batch-Grösse: {batch_size})...")
+    logger.info(f"Verarbeite {len(image_paths)} Bilder (Batch-Grösse: {batch_size})...")
 
     results = predict_batch(model, image_paths, device, img_size, batch_size)
 
@@ -463,12 +430,12 @@ def predict_folder(
         flag   = "⚠️ " if r["uncertain"] else ""
         status = "🔴 INFECTED" if r["predicted_idx"] == 1 else "🟢 HEALTHY"
         name   = Path(r["image_path"]).name
-        print(f"  {name:<40s} {flag}{status}  ({r['confidence']*100:.1f}%)")
+        logger.info(f"  {name:<40s} {flag}{status}  ({r['confidence']*100:.1f}%)")
 
     # Zusammenfassung
     n_infected  = sum(1 for r in results if r["predicted_idx"] == 1)
     n_uncertain = sum(1 for r in results if r["uncertain"])
-    print(f"\nGesamt: {len(results)} | Healthy: {len(results)-n_infected} "
+    logger.info(f"\nGesamt: {len(results)} | Healthy: {len(results)-n_infected} "
           f"| Infected: {n_infected} | Unsicher: {n_uncertain}")
 
     if save:
@@ -500,7 +467,7 @@ def launch_gui(
     try:
         import gradio as gr
     except ImportError:
-        print("[ERROR] Gradio nicht installiert. Bitte: pip install gradio")
+        logger.error("Gradio nicht installiert. Bitte: pip install gradio")
         return
 
     cam = GradCAM(model, get_last_conv_layer(model)) if gradcam else None
@@ -581,11 +548,12 @@ if __name__ == "__main__":
     else:
         device = torch.device(args.device)
 
-    print(f"Gerät  : {device}")
-    print(f"Modell : {args.model}")
+    logger.info(f"Gerät  : {device}")
+    logger.info(f"Modell : {args.model}")
 
-    model = load_model(args.model, device)
-    print("Modell geladen ✓\n")
+    from src.model import load_model
+    model = load_model(args.model)
+    logger.info("Modell geladen ✓\n")
 
     # GUI
     if args.gui:
@@ -618,8 +586,8 @@ if __name__ == "__main__":
         predict_folder(model, args.folder, device, args.img_size, args.batch_size, save=args.save)
 
     else:
-        print("Kein Modus angegeben. Beispiele:")
-        print("  python -m src.predict --image cell.png")
-        print("  python -m src.predict --image cell.png --gradcam --save")
-        print("  python -m src.predict --folder data/raw/infected/ --save")
-        print("  python -m src.predict --gui")
+        logger.warning("Kein Modus angegeben. Beispiele:")
+        logger.warning("  python -m src.predict --image cell.png")
+        logger.warning("  python -m src.predict --image cell.png --gradcam --save")
+        logger.warning("  python -m src.predict --folder data/raw/infected/ --save")
+        logger.warning("  python -m src.predict --gui")

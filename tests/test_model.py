@@ -10,14 +10,9 @@ from pathlib import Path
 
 import pytest
 import torch
-import torch.nn as nn
 
 from src.config import (
-    ARCHITECTURE,
     DEVICE,
-    DROPOUT_RATE,
-    FREEZE_BACKBONE,
-    HIDDEN_SIZE,
     NUM_CLASSES,
 )
 from src.model import (

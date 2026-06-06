@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
+import logging
 
 import torch
 from PIL import Image
@@ -30,6 +31,8 @@ from torchvision import transforms
 # ──────────────────────────────────────────────────────────────────────────────
 # Klassen-Mapping
 # ──────────────────────────────────────────────────────────────────────────────
+
+logger = logging.getLogger(__name__)
 
 CLASS_TO_IDX: Dict[str, int] = {"healthy": 0, "infected": 1}
 IDX_TO_CLASS: Dict[int, str] = {v: k for k, v in CLASS_TO_IDX.items()}
@@ -92,7 +95,7 @@ class MalariaDataset(Dataset):
             class_dir = self.root_dir / class_name
 
             if not class_dir.is_dir():
-                print(f"[WARN] Fehlender Klassenordner: {class_dir}")
+                logger.warning(f"Fehlender Klassenordner: {class_dir}")
                 continue
 
             found = 0
@@ -102,7 +105,7 @@ class MalariaDataset(Dataset):
                     found += 1
 
             if found == 0:
-                print(f"[WARN] Keine Bilder in: {class_dir}")
+                logger.warning(f"Keine Bilder in: {class_dir}")
 
     # ── Dataset API ───────────────────────────────────────────────────────────
 
@@ -148,7 +151,7 @@ class MalariaDataset(Dataset):
         weight_map: Dict[str, float] = {}
         for class_name, count in counts.items():
             if count == 0:
-                print(f"[WARN] Klasse '{class_name}' hat 0 Samples!")
+                logger.warning(f"Klasse '{class_name}' hat 0 Samples!")
                 weight_map[class_name] = 0.0
             else:
                 weight_map[class_name] = n_total / (n_classes * count)
@@ -314,18 +317,18 @@ def get_dataloaders(
     }
 
     # Übersicht ausgeben
-    print("\n╔══════════════════════════════════════════════════╗")
-    print("║            DataLoader – Übersicht                ║")
-    print("╠══════════════╦════════╦══════════╦══════════════╣")
-    print("║ Split        ║ Gesamt ║  Healthy ║  Infected    ║")
-    print("╠══════════════╬════════╬══════════╬══════════════╣")
+    logger.info("╔══════════════════════════════════════════════════╗")
+    logger.info("║            DataLoader – Übersicht                ║")
+    logger.info("╠══════════════╦════════╦══════════╦══════════════╣")
+    logger.info("║ Split        ║ Gesamt ║  Healthy ║  Infected    ║")
+    logger.info("╠══════════════╬════════╬══════════╬══════════════╣")
     for split, ds in datasets.items():
         c = ds.get_class_counts()
-        print(f"║ {split:<12s} ║ {len(ds):>6,} ║ {c['healthy']:>8,} ║ {c['infected']:>8,}     ║")
+        logger.info(f"║ {split:<12s} ║ {len(ds):>6,} ║ {c['healthy']:>8,} ║ {c['infected']:>8,}     ║")
     sampler_str = "WeightedSampler ✓" if use_weighted_sampler else "RandomShuffle"
-    print("╠══════════════╩════════╩══════════╩══════════════╣")
-    print(f"║  Batch: {batch_size:<4d}  Sampling: {sampler_str:<24s}║")
-    print("╚══════════════════════════════════════════════════╝\n")
+    logger.info("╠══════════════╩════════╩══════════╩══════════════╣")
+    logger.info(f"║  Batch: {batch_size:<4d}  Sampling: {sampler_str:<24s}║")
+    logger.info("╚══════════════════════════════════════════════════╝\n")
 
     return loaders
 
@@ -363,7 +366,7 @@ def compute_dataset_stats(
     channel_sum_sq = torch.zeros(3)
     n_pixels = 0
 
-    print("Berechne Datensatz-Statistiken...")
+    logger.info("Berechne Datensatz-Statistiken...")
     for images, _ in loader:
         B, C, H, W  = images.shape
         n_pixels    += B * H * W
@@ -376,9 +379,9 @@ def compute_dataset_stats(
     mean_t = tuple(round(v.item(), 4) for v in mean)
     std_t  = tuple(round(v.item(), 4) for v in std)
 
-    print(f"  mean (R, G, B) = {mean_t}")
-    print(f"  std  (R, G, B) = {std_t}")
-    print("  → In config.py unter MEAN und STD eintragen!\n")
+    logger.info(f"  mean (R, G, B) = {mean_t}")
+    logger.info(f"  std  (R, G, B) = {std_t}")
+    logger.info("  → In config.py unter MEAN und STD eintragen!\n")
 
     return mean_t, std_t
 
@@ -393,8 +396,8 @@ if __name__ == "__main__":
     base_dir = Path(__file__).resolve().parent.parent / "data" / "processed"
 
     if not base_dir.exists():
-        print(f"\n[ERROR] Nicht gefunden: {base_dir}")
-        print("→ Zuerst 'python preprocessing/prepare_dataset.py' ausführen.\n")
+        logger.error(f"Nicht gefunden: {base_dir}")
+        logger.error("→ Zuerst 'python preprocessing/prepare_dataset.py' ausführen.\n")
         sys.exit(1)
 
     # Einmalig Statistiken berechnen (danach auskommentieren):
@@ -409,8 +412,8 @@ if __name__ == "__main__":
     )
 
     images, labels = next(iter(loaders["train"]))
-    print(f"Batch-Shape  : {list(images.shape)}")   # [32, 3, 224, 224]
-    print(f"Label-Shape  : {list(labels.shape)}")   # [32]
-    print(f"Tensor-Range : [{images.min():.3f}, {images.max():.3f}]")
-    print(f"Erste Labels : {[IDX_TO_CLASS[l.item()] for l in labels[:6]]}")
-    print("\n✓ dataset.py funktioniert korrekt.")
+    logger.info(f"Batch-Shape  : {list(images.shape)}")   # [32, 3, 224, 224]
+    logger.info(f"Label-Shape  : {list(labels.shape)}")   # [32]
+    logger.info(f"Tensor-Range : [{images.min():.3f}, {images.max():.3f}]")
+    logger.info(f"Erste Labels : {[IDX_TO_CLASS[l.item()] for l in labels[:6]]}")
+    logger.info("✓ dataset.py funktioniert korrekt.")

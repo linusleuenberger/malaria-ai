@@ -5,15 +5,10 @@
 
 from __future__ import annotations
 
-import shutil
-import tempfile
-from pathlib import Path
 
 import cv2
 import numpy as np
 import pytest
-from PIL import Image
-
 from preprocessing.filter import (
     apply_filter_pipeline,
     apply_gaussian_blur,
@@ -29,7 +24,6 @@ from preprocessing.filter import (
 )
 from preprocessing.normalization import (
     apply_normalization_pipeline,
-    compute_channel_statistics,
     denormalize_imagenet,
     normalize_imagenet,
     normalize_minmax,
