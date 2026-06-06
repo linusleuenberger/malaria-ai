@@ -1,0 +1,88 @@
+{
+  "model": "D:\\Maturaarbeit\\malaria-ai\\models\\final\\final_model.pth",
+  "n_test": 4136,
+  "tta": true,
+  "optimal_threshold": 0.42,
+  "metrics": {
+    "accuracy": 0.7568,
+    "accuracy_ci_low": 0.743,
+    "accuracy_ci_high": 0.7706,
+    "precision": 0.8028,
+    "recall": 0.7568,
+    "specificity": 0.5619,
+    "f1": 0.7472,
+    "auc": 0.92,
+    "ap": 0.9241
+  },
+  "ece": 0.2573,
+  "per_class": {
+    "healthy": {
+      "precision": 0.9208,
+      "recall": 0.5619,
+      "f1": 0.6979,
+      "support": 2068
+    },
+    "infected": {
+      "precision": 0.6848,
+      "recall": 0.9516,
+      "f1": 0.7964,
+      "support": 2068
+    }
+  },
+  "threshold_sweep": [
+    {
+      "threshold": 0.1,
+      "precision": 0.5,
+      "recall": 1.0,
+      "f1": 0.6667
+    },
+    {
+      "threshold": 0.2,
+      "precision": 0.5002,
+      "recall": 1.0,
+      "f1": 0.6669
+    },
+    {
+      "threshold": 0.3,
+      "precision": 0.5228,
+      "recall": 0.9937,
+      "f1": 0.6851
+    },
+    {
+      "threshold": 0.4,
+      "precision": 0.6469,
+      "recall": 0.9666,
+      "f1": 0.7751
+    },
+    {
+      "threshold": 0.5,
+      "precision": 0.8606,
+      "recall": 0.8482,
+      "f1": 0.8544
+    },
+    {
+      "threshold": 0.6,
+      "precision": 0.9783,
+      "recall": 0.3922,
+      "f1": 0.5599
+    },
+    {
+      "threshold": 0.7,
+      "precision": 0.9706,
+      "recall": 0.0319,
+      "f1": 0.0618
+    },
+    {
+      "threshold": 0.8,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    {
+      "threshold": 0.9,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    }
+  ]
+}

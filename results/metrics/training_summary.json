@@ -1,0 +1,8 @@
+{
+  "epochs_trained": 10,
+  "best_epoch": 2,
+  "best_val_loss": 0.5679,
+  "best_val_acc": 0.825,
+  "final_train_acc": 0.9659,
+  "training_seconds": 230.9
+}

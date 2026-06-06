@@ -1,0 +1,183 @@
+00:10:18 | INFO    | Seed gesetzt: 42
+00:10:18 | INFO    | Performance-Setup: schnell (cudnn.benchmark an)
+00:10:19 | WARNING | augmentation.py konnte nicht geladen werden: No module named 'albumentations'
+→ pip install albumentations
+00:10:19 | INFO    | MODUS: Preprocessing
+00:10:19 | INFO    | ============================================================
+00:10:19 | INFO    | prepare_dataset.py – Pipeline gestartet
+00:10:19 | INFO    |   Filter:    True
+00:10:19 | INFO    |   Workers:   4
+00:10:19 | INFO    |   Force:     False
+00:10:19 | INFO    | ============================================================
+00:10:19 | INFO    | ============================================================
+00:10:19 | INFO    | Datensatz Validierung
+00:10:19 | INFO    | ============================================================
+00:10:19 | INFO    |   healthy     : 13,779 Bilder ✓
+00:10:20 | INFO    |   infected    : 13,779 Bilder ✓
+00:10:20 | INFO    |   Klassenbalance: Ratio = 1.00 [OK]
+00:10:20 | INFO    | Validierung abgeschlossen [OK]
+00:10:20 | INFO    | 
+healthy:
+  Train: 9,645
+  Val  : 2,066
+  Test : 2,068
+00:10:53 | INFO    |   train/healthy: 9,643 kopiert | 0 übersprungen | 2 fehlgeschlagen
+00:11:02 | INFO    |   val/healthy: 2,066 kopiert | 0 übersprungen | 0 fehlgeschlagen
+00:11:10 | INFO    |   test/healthy: 2,068 kopiert | 0 übersprungen | 0 fehlgeschlagen
+00:11:10 | INFO    | 
+infected:
+  Train: 9,645
+  Val  : 2,066
+  Test : 2,068
+00:11:41 | INFO    |   train/infected: 9,642 kopiert | 0 übersprungen | 3 fehlgeschlagen
+00:11:49 | INFO    |   val/infected: 2,066 kopiert | 0 übersprungen | 0 fehlgeschlagen
+00:17:38 | INFO    | Seed gesetzt: 42
+00:17:38 | INFO    | Performance-Setup: schnell (cudnn.benchmark an)
+00:17:39 | INFO    | MODUS: Preprocessing
+00:17:39 | INFO    | ============================================================
+00:17:39 | INFO    | prepare_dataset.py – Pipeline gestartet
+00:17:39 | INFO    |   Filter:    True
+00:17:39 | INFO    |   Workers:   4
+00:17:39 | INFO    |   Force:     False
+00:17:39 | INFO    | ============================================================
+00:17:39 | INFO    | ============================================================
+00:17:39 | INFO    | Datensatz Validierung
+00:17:39 | INFO    | ============================================================
+00:17:39 | INFO    |   healthy     : 13,779 Bilder ✓
+00:17:39 | INFO    |   infected    : 13,779 Bilder ✓
+00:17:39 | INFO    |   Klassenbalance: Ratio = 1.00 [OK]
+00:17:39 | INFO    | Validierung abgeschlossen [OK]
+00:17:39 | INFO    | 
+healthy:
+  Train: 9,645
+  Val  : 2,066
+  Test : 2,068
+00:17:43 | INFO    |   train/healthy: 0 kopiert | 9,643 übersprungen | 2 fehlgeschlagen
+00:17:46 | INFO    |   val/healthy: 0 kopiert | 2,066 übersprungen | 0 fehlgeschlagen
+00:17:49 | INFO    |   test/healthy: 0 kopiert | 2,068 übersprungen | 0 fehlgeschlagen
+00:17:49 | INFO    | 
+infected:
+  Train: 9,645
+  Val  : 2,066
+  Test : 2,068
+00:17:53 | INFO    |   train/infected: 0 kopiert | 9,642 übersprungen | 3 fehlgeschlagen
+00:17:56 | INFO    |   val/infected: 0 kopiert | 2,066 übersprungen | 0 fehlgeschlagen
+00:17:59 | INFO    |   test/infected: 4 kopiert | 2,064 übersprungen | 0 fehlgeschlagen
+00:17:59 | INFO    | 
+Integrity-Check nach Pipeline...
+00:17:59 | INFO    | ============================================================
+00:17:59 | INFO    | Integrity-Check
+00:17:59 | INFO    | ============================================================
+00:17:59 | INFO    |   ✓ train/healthy: 9,643 Bilder
+00:17:59 | INFO    |   ✓ train/infected: 9,642 Bilder
+00:17:59 | INFO    |   ✓ val/healthy: 2,066 Bilder
+00:17:59 | INFO    |   ✓ val/infected: 2,066 Bilder
+00:17:59 | INFO    |   ✓ test/healthy: 2,068 Bilder
+00:17:59 | INFO    |   ✓ test/infected: 2,068 Bilder
+00:17:59 | INFO    | 
+[OK] Integrity-Check bestanden!
+00:17:59 | INFO    | ============================================================
+00:17:59 | INFO    | 
+Berechne Kanal-Statistiken...
+00:17:59 | INFO    | Berechne Statistiken aus 1000 Bildern...
+00:18:03 | INFO    |   mean (R,G,B) = (0.6804, 0.4291, 0.441)
+00:18:03 | INFO    |   std  (R,G,B) = (0.1131, 0.1047, 0.129)
+00:18:03 | INFO    |   → Gespeichert: D:\Maturaarbeit\malaria-ai\results\metrics\dataset_stats.json
+00:18:03 | INFO    |   → In config.py unter MEAN & STD eintragen!
+00:18:03 | INFO    |   mean: (0.6804, 0.4291, 0.441)
+  std:  (0.1131, 0.1047, 0.129)
+  → In config.py unter MEAN & STD eintragen!
+00:18:03 | INFO    | Report gespeichert: D:\Maturaarbeit\malaria-ai\results\metrics\preprocessing_report.json
+00:18:03 | INFO    | 
+============================================================
+00:18:03 | INFO    | Pipeline abgeschlossen [OK]
+00:18:03 | INFO    | Dauer: 0h 0m 24s
+00:18:03 | INFO    | ============================================================
+00:18:03 | INFO    | Split      Klasse         Bilder
+00:18:03 | INFO    | --------------------------------
+00:18:03 | INFO    | train      healthy             0
+00:18:03 | INFO    | train      infected            0
+00:18:03 | INFO    | val        healthy             0
+00:18:03 | INFO    | val        infected            0
+00:18:03 | INFO    | test       healthy             0
+00:18:03 | INFO    | test       infected            4
+00:18:03 | INFO    | --------------------------------
+00:18:03 | INFO    | Total                         4
+00:18:03 | INFO    | ============================================================
+00:18:03 | INFO    | ============================================================
+00:18:03 | INFO    | Integrity-Check
+00:18:03 | INFO    | ============================================================
+00:18:04 | INFO    |   ✓ train/healthy: 9,643 Bilder
+00:18:04 | INFO    |   ✓ train/infected: 9,642 Bilder
+00:18:04 | INFO    |   ✓ val/healthy: 2,066 Bilder
+00:18:04 | INFO    |   ✓ val/infected: 2,066 Bilder
+00:18:04 | INFO    |   ✓ test/healthy: 2,068 Bilder
+00:18:04 | INFO    |   ✓ test/infected: 2,068 Bilder
+00:18:04 | INFO    | 
+[OK] Integrity-Check bestanden!
+00:18:04 | INFO    | ============================================================
+00:18:04 | INFO    | Gesamtlaufzeit: 26s
+00:19:00 | INFO    | Seed gesetzt: 42
+00:19:00 | INFO    | Performance-Setup: schnell (cudnn.benchmark an)
+00:19:01 | INFO    | MODUS: Training | Epochen=40 Batch=256
+00:19:01 | INFO    | PyTorch 2.11.0+cu128 | CUDA verfuegbar: True | Geraet: CUDA
+00:19:01 | INFO    | GPU: NVIDIA GeForce RTX 5070 Ti (17.1 GB VRAM)
+00:19:01 | INFO    | DataLoader bereit (Batch=256, Workers=12):
+00:19:01 | INFO    |   train  19285 Bilder | healthy=9643 infected=9642
+00:19:01 | INFO    |   val     4132 Bilder | healthy=2066 infected=2066
+00:19:02 | INFO    | Parameter gesamt: 24,033,602 | trainierbar: 525,570 | eingefroren: 23,508,032
+00:19:56 | INFO    | Sanity Check bestanden (Batch (256, 3, 224, 224)).
+00:19:58 | INFO    | torch.compile aktiv (einmaliger Kompilier-Overhead in Epoche 1).
+00:19:58 | INFO    | ================================================================
+00:19:58 | INFO    | Training: Epochen 1-40 | Batch 256 | bf16=True | EMA=True
+00:19:58 | INFO    | ================================================================
+00:22:09 | INFO    | Seed gesetzt: 42
+00:22:09 | INFO    | Performance-Setup: schnell (cudnn.benchmark an)
+00:22:11 | INFO    | MODUS: Training | Epochen=40 Batch=256
+00:22:11 | INFO    | PyTorch 2.11.0+cu128 | CUDA verfuegbar: True | Geraet: CUDA
+00:22:11 | INFO    | GPU: NVIDIA GeForce RTX 5070 Ti (17.1 GB VRAM)
+00:22:11 | INFO    | DataLoader bereit (Batch=256, Workers=12):
+00:22:11 | INFO    |   train  19285 Bilder | healthy=9643 infected=9642
+00:22:11 | INFO    |   val     4132 Bilder | healthy=2066 infected=2066
+00:22:12 | INFO    | Parameter gesamt: 24,033,602 | trainierbar: 525,570 | eingefroren: 23,508,032
+00:22:58 | INFO    | Sanity Check bestanden (Batch (256, 3, 224, 224)).
+00:22:58 | INFO    | ================================================================
+00:22:58 | INFO    | Training: Epochen 1-40 | Batch 256 | bf16=True | EMA=True
+00:22:58 | INFO    | ================================================================
+00:24:05 | INFO    | Epoche  1/40 | train loss 0.3966 acc 0.880 | val loss 0.6397 acc 0.663 | lr 6.67e-04 |   67s  <- bestes
+00:24:24 | INFO    | Epoche  2/40 | train loss 0.3586 acc 0.910 | val loss 0.5679 acc 0.825 | lr 1.00e-03 |   19s  <- bestes
+00:24:24 | INFO    | Aufgetaut: letzte 60 Layer -> 18,579,202 trainierbare Parameter
+00:24:42 | INFO    | Epoche  3/40 | train loss 0.3129 acc 0.938 | val loss 1.0197 acc 0.500 | lr 1.00e-03 |   18s
+00:25:00 | INFO    | Epoche  4/40 | train loss 0.2870 acc 0.950 | val loss 1.1976 acc 0.500 | lr 9.98e-04 |   17s
+00:25:18 | INFO    | Epoche  5/40 | train loss 0.2775 acc 0.956 | val loss 1.3789 acc 0.500 | lr 9.93e-04 |   18s
+00:25:36 | INFO    | Epoche  6/40 | train loss 0.2679 acc 0.962 | val loss 1.2086 acc 0.500 | lr 9.84e-04 |   18s
+00:25:55 | INFO    | Epoche  7/40 | train loss 0.2665 acc 0.963 | val loss 1.2138 acc 0.500 | lr 9.71e-04 |   19s
+00:26:13 | INFO    | Epoche  8/40 | train loss 0.2611 acc 0.965 | val loss 1.0493 acc 0.501 | lr 9.56e-04 |   18s
+00:26:31 | INFO    | Epoche  9/40 | train loss 0.2596 acc 0.966 | val loss 0.8782 acc 0.513 | lr 9.37e-04 |   18s
+00:26:49 | INFO    | Epoche 10/40 | train loss 0.2586 acc 0.966 | val loss 0.7610 acc 0.545 | lr 9.14e-04 |   18s
+00:26:49 | INFO    | Early Stopping nach Epoche 10 (kein Fortschritt seit 8).
+00:26:50 | INFO    | Bestes Modell -> D:\Maturaarbeit\malaria-ai\models\final\final_model.pth
+00:26:50 | INFO    | Statistiken gespeichert: training_history.json, training_summary.json
+00:26:50 | INFO    | Plot gespeichert: training_history.png
+00:26:50 | INFO    | Training fertig in 232s
+00:26:56 | INFO    | DataLoader bereit (Batch=256, Workers=12):
+00:26:56 | INFO    |   test    4136 Bilder | healthy=2068 infected=2068
+00:26:57 | INFO    | Parameter gesamt: 24,033,602 | trainierbar: 24,033,602 | eingefroren: 0
+00:26:57 | INFO    | Modell geladen: D:\Maturaarbeit\malaria-ai\models\final\final_model.pth
+00:26:57 | INFO    | ================================================================
+00:26:57 | INFO    | Evaluation auf dem Test-Split
+00:26:57 | INFO    | ================================================================
+00:27:45 | INFO    | Optimaler Schwellenwert: 0.40 (Recall 0.952, F1 0.769)
+00:27:45 | INFO    | 
+              precision    recall  f1-score   support
+
+     healthy     0.9082    0.4782    0.6265      2068
+    infected     0.6459    0.9516    0.7695      2068
+
+    accuracy                         0.7149      4136
+   macro avg     0.7770    0.7149    0.6980      4136
+weighted avg     0.7770    0.7149    0.6980      4136
+
+00:27:45 | INFO    | Accuracy 71.49% (95% CI 70.09-72.92) | Recall 71.49% | Specificity 47.82% | F1 69.80% | AUC 0.8917 | AP 0.8949
+00:27:45 | INFO    | Gespeichert: test_metrics.json, optimal_threshold.json + Plots
+00:27:49 | INFO    | Gesamtlaufzeit: 340s

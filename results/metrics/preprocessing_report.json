@@ -1,0 +1,52 @@
+{
+    "meta": {
+        "datum": "2026-06-07 00:18:03",
+        "dauer": "0h 0m 24s",
+        "dauer_sekunden": 24.8
+    },
+    "config": {
+        "train_split": 0.7,
+        "val_split": 0.15,
+        "test_split": 0.15,
+        "random_seed": 42,
+        "apply_filters": true
+    },
+    "filter_pipeline": {
+        "gaussian_blur": true,
+        "clahe_contrast": true,
+        "sharpness": true,
+        "artifact_removal": true,
+        "macenko_norm": true
+    },
+    "splits": {
+        "train": {
+            "healthy": 0,
+            "infected": 0
+        },
+        "val": {
+            "healthy": 0,
+            "infected": 0
+        },
+        "test": {
+            "healthy": 0,
+            "infected": 4
+        }
+    },
+    "totals": {
+        "train": 0,
+        "val": 0,
+        "test": 4
+    },
+    "channel_statistics": {
+        "mean": [
+            0.6804,
+            0.4291,
+            0.441
+        ],
+        "std": [
+            0.1131,
+            0.1047,
+            0.129
+        ]
+    }
+}

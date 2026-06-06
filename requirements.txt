@@ -1,40 +1,44 @@
 # ============================================================
-# requirements.txt – Malaria-KI Projekt
+# requirements.txt - Malaria-KI Projekt
+# Alle vom Code tatsaechlich verwendeten Libraries (mit Verwendungsort).
 # ============================================================
 # Installation:
 #   pip install -r requirements.txt
 #
-# GPU (CUDA 12.1):
+# GPU - RTX 5070 Ti (Blackwell, CUDA 12.8) ZUERST installieren:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
+# Aeltere NVIDIA-GPU (CUDA 12.1):
 #   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
-# GPU (CUDA 11.8):
-#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 # CPU only:
 #   pip install torch torchvision
 # ============================================================
 
-# Deep Learning
-torch>=2.1.0
-torchvision>=0.16.0
+# Deep Learning - Modell, Training, Inferenz (src/model, train, dataset, ...)
+# Fuer die 5070 Ti die cu128-Version verwenden (siehe oben).
+torch>=2.7.0
+torchvision>=0.22.0
 
-# Bildverarbeitung
-Pillow>=10.0.0
-opencv-python>=4.8.0
-albumentations>=1.3.0
-
-# Numerik & Daten
+# Numerik - ueberall (Arrays, Metriken, Bootstrap-CI)
 numpy>=1.24.0
+
+# Bildladen / -transformationen (src/dataset, predict, notebooks)
+Pillow>=10.0.0
+
+# Klassische Bildverarbeitung - nur Preprocessing raw->processed (preprocessing/*)
+opencv-python>=4.8.0
+
+# Metriken: Accuracy/F1/ROC/AP/Confusion (src/evaluate, analyze)
 scikit-learn>=1.3.0
 
-# Visualisierung
+# Plots: Loss-Kurven, ROC/PR, Confusion, Grad-CAM, Kalibrierung (train, evaluate, analyze)
 matplotlib>=3.7.0
-seaborn>=0.12.0
 
-# Fortschrittsanzeige
+# Fortschrittsbalken im Training & Preprocessing (src/train, preprocessing)
 tqdm>=4.65.0
 
-# Notebooks
+# Notebooks (notebooks/*.ipynb)
 jupyter>=1.0.0
 ipykernel>=6.0.0
 
-# Tests
+# Tests (tests/*.py)
 pytest>=7.4.0

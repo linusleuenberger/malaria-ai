@@ -303,7 +303,9 @@ def normalize_staining_macenko(
     OD_norm = OD_norm.T.reshape(OD.shape)
 
     # ── Schritt 8: Zurück zu RGB ──────────────────────────
-    image_norm = light_intensity * np.exp(-OD_norm)
+    # -OD_norm auf <= 0 begrenzen: verhindert Overflow in exp()
+    # (Werte > 255 wuerden ohnehin auf 255 geclippt -> identisches Ergebnis).
+    image_norm = light_intensity * np.exp(np.minimum(-OD_norm, 0.0))
     image_norm = np.clip(image_norm, 0, 255).astype(np.uint8)
 
     return cv2.cvtColor(image_norm, cv2.COLOR_RGB2BGR)

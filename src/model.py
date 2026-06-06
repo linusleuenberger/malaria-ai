@@ -1,12 +1,13 @@
 # ============================================================
 # src/model.py
-# KI-Architektur – flexibles Transfer Learning
+# Modell-Architektur (Transfer Learning) + Speichern/Laden.
 # ============================================================
 
 from __future__ import annotations
 
 import logging
-from typing import Dict, Optional
+from pathlib import Path
+from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -14,9 +15,9 @@ from torchvision import models
 
 from src.config import (
     ARCHITECTURE,
+    CHANNELS_LAST,
     DEVICE,
     DROPOUT_RATE,
-    FINAL_MODEL_PATH,
     FREEZE_BACKBONE,
     HIDDEN_SIZE,
     LABEL_SMOOTHING,
@@ -25,207 +26,128 @@ from src.config import (
 
 logger = logging.getLogger(__name__)
 
-
-# ── Unterstützte Architekturen ────────────────────────────────
-SUPPORTED_MODELS: Dict[str, object] = {
-    "resnet50"       : models.resnet50,
-    "resnet101"      : models.resnet101,
+_SUPPORTED = {
+    "resnet50": models.resnet50,
+    "resnet101": models.resnet101,
     "efficientnet_b0": models.efficientnet_b0,
 }
 
 
 # ── Modell bauen ──────────────────────────────────────────────
 def build_model(
-    architecture:    str   = ARCHITECTURE,
-    num_classes:     int   = NUM_CLASSES,
-    freeze_backbone: bool  = FREEZE_BACKBONE,
-    dropout_rate:    float = DROPOUT_RATE,
-    hidden_size:     int   = HIDDEN_SIZE,
+    architecture: str = ARCHITECTURE,
+    num_classes: int = NUM_CLASSES,
+    freeze_backbone: bool = FREEZE_BACKBONE,
+    dropout_rate: float = DROPOUT_RATE,
+    hidden_size: int = HIDDEN_SIZE,
+    pretrained: bool = True,
 ) -> nn.Module:
-    """
-    Vortrainiertes Modell laden und für Malaria-Klassifikation anpassen.
+    """Vortrainiertes CNN laden und den Klassifikationskopf ersetzen."""
+    if architecture not in _SUPPORTED:
+        raise ValueError(f"Unbekannte Architektur '{architecture}'. "
+                         f"Optionen: {list(_SUPPORTED)}")
 
-    Args:
-        architecture    : "resnet50", "resnet101" oder "efficientnet_b0"
-        num_classes     : Anzahl Klassen (2 oder 5)
-        freeze_backbone : Vortrainierte Layer einfrieren
-        dropout_rate    : Dropout Wahrscheinlichkeit
-        hidden_size     : Grösse des mittleren Layers
+    model = _SUPPORTED[architecture](weights="DEFAULT" if pretrained else None)
 
-    Returns:
-        Modell auf DEVICE verschoben
-    """
-
-    if architecture not in SUPPORTED_MODELS:
-        raise ValueError(
-            f"Unbekannte Architektur: '{architecture}'\n"
-            f"Optionen: {list(SUPPORTED_MODELS.keys())}"
-        )
-
-    # ── 1. Vortrainiertes Modell laden ────────────────────────
-    model_fn = SUPPORTED_MODELS[architecture]
-    model    = model_fn(weights="DEFAULT")
-    logger.info(f"Modell geladen: {architecture}")
-
-    # ── 2. Backbone einfrieren ────────────────────────────────
     if freeze_backbone:
-        for param in model.parameters():
-            param.requires_grad = False
-        _set_bn_eval(model)
-        logger.info("Backbone eingefroren.")
+        for p in model.parameters():
+            p.requires_grad = False
 
-    # ── 3. Letzten Layer ersetzen ─────────────────────────────
-    in_features = _get_in_features(model, architecture)
-
-    new_head = nn.Sequential(
+    in_features = _in_features(model, architecture)
+    head = nn.Sequential(
         nn.Linear(in_features, hidden_size),
         nn.BatchNorm1d(hidden_size),
-        nn.ReLU(),
-        nn.Dropout(p=dropout_rate),
-        nn.Linear(hidden_size, num_classes)
+        nn.ReLU(inplace=True),
+        nn.Dropout(dropout_rate),
+        nn.Linear(hidden_size, num_classes),
     )
-
     if "resnet" in architecture:
-        model.fc = new_head
-    elif "efficientnet" in architecture:
-        model.classifier = new_head
+        model.fc = head
+    else:  # efficientnet
+        model.classifier = head
 
-    # ── 4. Auf GPU/CPU verschieben ────────────────────────────
     model = model.to(DEVICE)
-    _log_parameter_count(model)
+    if CHANNELS_LAST and DEVICE == "cuda":
+        model = model.to(memory_format=torch.channels_last)
 
+    _log_params(model)
     return model
 
 
-# ── Loss Funktion ─────────────────────────────────────────────
 def get_loss_function() -> nn.Module:
-    """
-    CrossEntropyLoss mit Label Smoothing.
-    Label Smoothing macht das Modell robuster gegen
-    unsichere oder falsch gelabelte Bilder.
-    """
+    """CrossEntropy mit Label Smoothing."""
     return nn.CrossEntropyLoss(label_smoothing=LABEL_SMOOTHING)
 
 
-# ── Schrittweises Auftauen ────────────────────────────────────
-def unfreeze_layers(model: nn.Module, n_layers: int) -> None:
-    """
-    Letzte n_layers Layer trainierbar machen.
-
-    Empfohlene Reihenfolge:
-        Schritt 1: freeze_backbone=True  -> nur Head trainieren
-        Schritt 2: unfreeze_layers(20)   -> letzte 20 Layer auftauen
-        Schritt 3: unfreeze_layers(50)   -> noch mehr auftauen
-
-    Args:
-        model    : Das Modell
-        n_layers : Anzahl Layer die aufgetaut werden sollen
-    """
+def unfreeze_layers(model: nn.Module, n_layers: int) -> int:
+    """Die letzten n_layers Parameter-Tensoren wieder trainierbar machen."""
     params = list(model.parameters())
-    for param in params[-n_layers:]:
-        param.requires_grad = True
-
-    trainable = sum(p.numel() for p in model.parameters()
-                    if p.requires_grad)
-    logger.info(
-        f"Aufgetaut: letzte {n_layers} Layer "
-        f"-> {trainable:,} trainierbare Parameter"
-    )
+    for p in params[-n_layers:]:
+        p.requires_grad = True
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    logger.info("Aufgetaut: letzte %d Layer -> %s trainierbare Parameter",
+                n_layers, f"{trainable:,}")
+    return trainable
 
 
-# ── Modell speichern ──────────────────────────────────────────
-def save_model(
-    model:      nn.Module,
-    path:       object = FINAL_MODEL_PATH,
-    extra_info: Optional[dict] = None,
-) -> None:
+# ── Speichern / Laden ─────────────────────────────────────────
+def save_checkpoint(state: dict, path: Path) -> None:
+    """Beliebigen Trainings-Zustand speichern (atomar)."""
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    torch.save(state, tmp)
+    tmp.replace(path)
+
+
+def load_model(path: str | Path, device: str = DEVICE) -> nn.Module:
     """
-    Modell speichern inkl. Metadaten.
+    Modell fuer Inferenz/Evaluation laden.
 
-    Args:
-        model      : Das trainierte Modell
-        path       : Speicherpfad
-        extra_info : Zusätzliche Infos (Epoch, Accuracy etc.)
+    Funktioniert mit allen Checkpoint-Formaten dieses Projekts
+    (last/best/final). Bevorzugt die EMA-Gewichte, falls vorhanden,
+    da diese in der Regel zuverlaessiger sind.
     """
-    checkpoint = {
-        "model_state_dict": model.state_dict(),
-        "architecture"    : ARCHITECTURE,
-        "num_classes"     : NUM_CLASSES,
-    }
+    ckpt = torch.load(path, map_location=device, weights_only=False)
 
-    if extra_info:
-        checkpoint.update(extra_info)
+    if isinstance(ckpt, dict) and "model" in ckpt:
+        arch = ckpt.get("architecture", ARCHITECTURE)
+        ncls = ckpt.get("num_classes", NUM_CLASSES)
+        state = ckpt.get("ema") or ckpt["model"]
+    elif isinstance(ckpt, dict) and "model_state_dict" in ckpt:  # altes Format
+        arch = ckpt.get("architecture", ARCHITECTURE)
+        ncls = ckpt.get("num_classes", NUM_CLASSES)
+        state = ckpt["model_state_dict"]
+    else:  # reines state_dict
+        arch, ncls, state = ARCHITECTURE, NUM_CLASSES, ckpt
 
-    torch.save(checkpoint, path)
-    logger.info(f"Modell gespeichert: {path}")
-
-
-# ── Modell laden ──────────────────────────────────────────────
-def load_model(path: object = FINAL_MODEL_PATH) -> nn.Module:
-    """
-    Gespeichertes Modell laden.
-
-    Args:
-        path : Pfad zum gespeicherten Checkpoint
-
-    Returns:
-        Modell im eval() Modus auf DEVICE
-    """
-    checkpoint = torch.load(path, map_location=DEVICE)
-
-    model = build_model(
-        architecture    = checkpoint.get("architecture", ARCHITECTURE),
-        num_classes     = checkpoint.get("num_classes",  NUM_CLASSES),
-        freeze_backbone = False,
-    )
-
-    model.load_state_dict(checkpoint["model_state_dict"])
+    model = build_model(architecture=arch, num_classes=ncls,
+                        freeze_backbone=False)
+    model.load_state_dict(state)
     model.eval()
-
-    logger.info(f"Modell geladen von: {path}")
+    logger.info("Modell geladen: %s", path)
     return model
 
 
 # ── Hilfsfunktionen ───────────────────────────────────────────
-def _get_in_features(model: nn.Module, architecture: str) -> int:
-    """Gibt die Eingabegrösse des letzten Layers zurück."""
+def _in_features(model: nn.Module, architecture: str) -> int:
     if "resnet" in architecture:
         return model.fc.in_features
-    elif "efficientnet" in architecture:
-        return model.classifier[1].in_features
-    raise ValueError(f"Unbekannte Architektur: {architecture}")
+    return model.classifier[1].in_features
 
 
-def _set_bn_eval(model: nn.Module) -> None:
-    """
-    BatchNorm Layer in eval Modus setzen wenn Backbone eingefroren.
-    Verhindert dass BatchNorm Statistiken sich verändern.
-    """
-    for module in model.modules():
-        if isinstance(module, nn.BatchNorm2d):
-            module.eval()
+def _log_params(model: nn.Module) -> None:
+    total = sum(p.numel() for p in model.parameters())
+    trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    logger.info("Parameter gesamt: %s | trainierbar: %s | eingefroren: %s",
+                f"{total:,}", f"{trainable:,}", f"{total - trainable:,}")
 
 
-def _log_parameter_count(model: nn.Module) -> None:
-    """Logt Anzahl trainierbare und eingefrorene Parameter."""
-    total     = sum(p.numel() for p in model.parameters())
-    trainable = sum(p.numel() for p in model.parameters()
-                    if p.requires_grad)
-
-    logger.info(f"Parameter gesamt:      {total:>12,}")
-    logger.info(f"Parameter trainierbar: {trainable:>12,}")
-    logger.info(f"Parameter eingefroren: {total - trainable:>12,}")
-
-
-# ── Quick-Test: python -m src.model ──────────────────────────
 if __name__ == "__main__":
-    model = build_model()
-    print(model)
-
-    dummy = torch.randn(1, 3, 224, 224).to(DEVICE)
-    out   = model(dummy)
-    print(f"\nEingabe:  {list(dummy.shape)}")
-    print(f"Ausgabe:  {list(out.shape)}")
-    print(f"Klassen:  {NUM_CLASSES}")
-    print(f"Loss:     {get_loss_function()}")
-    print("\n[OK] model.py funktioniert korrekt.")
+    logging.basicConfig(level=logging.INFO)
+    m = build_model()
+    dummy = torch.randn(2, 3, 224, 224).to(DEVICE)
+    if CHANNELS_LAST and DEVICE == "cuda":
+        dummy = dummy.to(memory_format=torch.channels_last)
+    print("Output:", tuple(m(dummy).shape), "| Loss:", get_loss_function())
+    print("[OK] model.py")
